@@ -1,11 +1,11 @@
 import React, { createContext, useContext, useReducer, useEffect, ReactNode, Dispatch } from 'react';
-import { Page, Element, Viewport, Style, ProjectType, AppState, CustomComponent, Asset, PresentState, DeepPartial, ThemeState, PropDefinition, CodeSnippet, StateVariable, ActionStep, ApiDataSource, CopiedStyles, ThemeToken, ElementAnimation, AnimationKeyframe, MockApiEndpoint, Commit, MultiplayerCursor, ComponentSlot, PageTemplate, VariantPropertyGroup, VariantOption, ResponsiveStyles, AppMode, LogicFlow, FileNode, AnyDataSource, BuildState, BuildTarget, BuildStatus, DeepReadonly } from '../types';
+import { Page, Element, Viewport, Style, ProjectType, AppState, CustomComponent, Asset, PresentState, DeepPartial, ThemeState, PropDefinition, CodeSnippet, StateVariable, ActionStep, ApiDataSource, CopiedStyles, ThemeToken, ElementAnimation, AnimationKeyframe, MockApiEndpoint, Commit, MultiplayerCursor, ComponentSlot, PageTemplate, VariantPropertyGroup, VariantOption, ResponsiveStyles, AppMode, LogicFlow, FileNode, AnyDataSource, BuildState, BuildTarget, BuildStatus, DeepReadonly, FlowNode, FlowConnection } from '../types';
 import { v4 as uuidv4 } from 'uuid';
 import { produce, Draft } from 'immer';
-import { findElementDeep, removeElement, insertElementAtIndex, duplicateElement, assignNewIdsToTree } from '../lib/treeUtils';
+import { findElementDeep, removeElement, insertElementAtIndex, duplicateElement, assignNewIdsToTree, deepMerge } from '../lib/treeUtils';
 import { componentLibrary, createDefaultElement } from '../constants';
 import { toast } from 'react-hot-toast';
-
+import { executeFlow as runFlow } from '../lib/logicExecutor';
 
 type Action =
   | { type: 'SET_PROJECT_TYPE'; payload: ProjectType }
@@ -42,6 +42,7 @@ type Action =
   | { type: 'REDO' }
   | { type: 'COMMIT_CHANGES', payload: string }
   | { type: 'SET_SELECTED_ELEMENT_ID'; payload: string | null }
+  | { type: 'SET_SELECTED_LOGIC_NODE_ID'; payload: string | null }
   | { type: 'SET_HOVERED_ELEMENT_ID'; payload: string | null }
   | { type: 'SET_ALT_KEY_PRESSED'; payload: boolean }
   | { type: 'SET_EDITING_COMPONENT_ID', payload: string | null }
@@ -78,6 +79,10 @@ type Action =
   | { type: 'UPDATE_COMPONENT_SLOT', payload: { componentId: string, slotId: string, name: string } }
   | { type: 'DELETE_COMPONENT_SLOT', payload: { componentId: string, slotId: string } }
   | { type: 'ADD_LOGIC_FLOW'; payload: { pageId: string; flow: LogicFlow } }
+  | { type: 'ADD_FLOW_NODE'; payload: { pageId: string; flowId: string; node: FlowNode } }
+  | { type: 'DELETE_FLOW_NODE'; payload: { pageId: string; flowId: string; nodeId: string } }
+  | { type: 'UPDATE_FLOW_NODE'; payload: { pageId: string; flowId: string; nodeId: string; updates: Partial<FlowNode> } }
+  | { type: 'ADD_FLOW_CONNECTION'; payload: { pageId: string; flowId: string; connection: FlowConnection } }
   | { type: 'SET_WORKSPACE', payload: FileNode[] }
   | { type: 'UPDATE_WORKSPACE_FILE_CONTENT', payload: { path: string, content: string } }
   | { type: 'SET_BUILD_STATE', payload: Partial<BuildState> }
@@ -105,7 +110,10 @@ type Action =
   | { type: 'DEFINE_GLOBAL_STATE_VARIABLE'; payload: { variable: StateVariable, index?: number } }
   | { type: 'DELETE_GLOBAL_STATE_VARIABLE'; payload: { name: string } }
   | { type: 'EXECUTE_ACTIONS'; payload: { actions: ActionStep[] } }
-  | { type: 'INITIALIZE_RUNTIME_STATE'; payload: { pageId: string | null } };
+  | { type: 'SET_RUNTIME_STATE'; payload: { [key: string]: any } }
+  | { type: 'INITIALIZE_RUNTIME_STATE'; payload: { pageId: string | null } }
+  | { type: 'LOAD_PROJECT_STATE'; payload: PresentState }
+  | { type: 'REVERT_TO_COMMIT'; payload: string };
 
 const defaultTheme: ThemeState = {
     variables: {
@@ -145,7 +153,7 @@ const defaultTheme: ThemeState = {
 };
 
 const createHistorySnapshot = (draft: Draft<AppState>): PresentState => {
-    const { history, runtimeState, visibleModalIds, copiedStyles, appMode, previewMode, altKeyPressed, hoveredElementId, unsavedChanges, commits, multiplayerCursors, panelLayout, panels, buildState, ...presentData } = draft;
+    const { history, runtimeState, visibleModalIds, copiedStyles, appMode, previewMode, altKeyPressed, hoveredElementId, unsavedChanges, commits, multiplayerCursors, panelLayout, panels, buildState, selectedElementId, selectedLogicNodeId, publishUrl, ...presentData } = draft;
     return JSON.parse(JSON.stringify(presentData));
 };
 
@@ -156,10 +164,10 @@ const restoreFromSnapshot = (draft: Draft<AppState>, snapshot: PresentState) => 
 
 const appReducer = produce((draft: Draft<AppState>, action: Action) => {
     const nonUndoableActions: Action['type'][] = [
-        'UNDO', 'REDO', 'FIND_PARENT', 'SET_ACTIVE_PAGE', 'SET_SELECTED_ELEMENT_ID', 'SET_HOVERED_ELEMENT_ID', 'SET_ALT_KEY_PRESSED',
+        'UNDO', 'REDO', 'FIND_PARENT', 'SET_ACTIVE_PAGE', 'SET_SELECTED_ELEMENT_ID', 'SET_SELECTED_LOGIC_NODE_ID', 'SET_HOVERED_ELEMENT_ID', 'SET_ALT_KEY_PRESSED',
         'SET_EDITING_COMPONENT_ID', 'SET_VIEWPORT', 'SET_CANVAS_WIDTH', 'SET_CANVAS_ZOOM', 'SHOW_MODAL', 'HIDE_MODAL', 'TOGGLE_MODAL',
         'EXECUTE_ACTIONS', 'INITIALIZE_RUNTIME_STATE', 'SET_PAGE_DATA_STATE', 'COPY_STYLES', 'COMMIT_CHANGES', 'UPDATE_CURSORS',
-        'SET_APP_MODE', 'SET_PREVIEW_MODE', 'SET_PANEL_LAYOUT', 'SET_PANELS_STATE', 'SET_WORKSPACE', 'SET_BUILD_STATE', 'UPDATE_WORKSPACE_FILE_CONTENT'
+        'SET_APP_MODE', 'SET_PREVIEW_MODE', 'SET_PANEL_LAYOUT', 'SET_PANELS_STATE', 'SET_WORKSPACE', 'SET_BUILD_STATE', 'UPDATE_WORKSPACE_FILE_CONTENT', 'SET_RUNTIME_STATE'
     ];
 
     if (!nonUndoableActions.includes(action.type)) {
@@ -335,18 +343,18 @@ const appReducer = produce((draft: Draft<AppState>, action: Action) => {
         case 'UPDATE_ELEMENT': {
             const { element } = findElementDeep(getElementTree(), action.payload.id);
             if (element) {
-                const deepMerge = (target: any, source: any) => {
+                const deepMergeUpdate = (target: any, source: any) => {
                     for (const key in source) {
                         const sourceVal = source[key];
                         if (sourceVal !== null && typeof sourceVal === 'object' && !Array.isArray(sourceVal) && target[key] !== null && typeof target[key] === 'object') {
                             if (!target[key]) target[key] = {};
-                            deepMerge(target[key], sourceVal);
+                            deepMergeUpdate(target[key], sourceVal);
                         } else {
                             target[key] = sourceVal;
                         }
                     }
                 };
-                deepMerge(element, action.payload.updates);
+                deepMergeUpdate(element, action.payload.updates);
             }
             break;
         }
@@ -478,7 +486,26 @@ const appReducer = produce((draft: Draft<AppState>, action: Action) => {
             (draft.commits as Draft<Commit>[]).unshift({ id: uuidv4(), message: action.payload, timestamp: new Date().toISOString(), state: createHistorySnapshot(draft) });
             draft.unsavedChanges = 0;
             break;
+        case 'REVERT_TO_COMMIT': {
+            const commit = draft.commits.find(c => c.id === action.payload);
+            if (commit) {
+                restoreFromSnapshot(draft, commit.state);
+                draft.history = { past: [], future: [] };
+                draft.unsavedChanges = 0;
+            }
+            break;
+        }
+        case 'LOAD_PROJECT_STATE': {
+            restoreFromSnapshot(draft, action.payload);
+            // Reset transient state after loading a project
+            draft.history = { past: [], future: [] };
+            draft.unsavedChanges = 0;
+            draft.selectedElementId = null;
+            draft.activePageId = draft.pages[0]?.id || null;
+            break;
+        }
         case 'SET_SELECTED_ELEMENT_ID': draft.selectedElementId = action.payload; break;
+        case 'SET_SELECTED_LOGIC_NODE_ID': draft.selectedLogicNodeId = action.payload; break;
         case 'SET_HOVERED_ELEMENT_ID': draft.hoveredElementId = action.payload; break;
         case 'SET_ALT_KEY_PRESSED': draft.altKeyPressed = action.payload; break;
         case 'SET_EDITING_COMPONENT_ID': draft.editingComponentId = action.payload; draft.selectedElementId = null; break;
@@ -606,6 +633,44 @@ const appReducer = produce((draft: Draft<AppState>, action: Action) => {
             if(page) (page.logicFlows as any).push(action.payload.flow);
             break;
         }
+        case 'ADD_FLOW_NODE': {
+            const page = draft.pages.find(p => p.id === action.payload.pageId);
+            const flow = page?.logicFlows.find(f => f.id === action.payload.flowId);
+            if (flow) { (flow.nodes as Draft<FlowNode>[]).push(action.payload.node); }
+            break;
+        }
+        case 'UPDATE_FLOW_NODE': {
+            const page = draft.pages.find(p => p.id === action.payload.pageId);
+            const flow = page?.logicFlows.find(f => f.id === action.payload.flowId);
+            const node = flow?.nodes.find(n => n.id === action.payload.nodeId);
+            if (node) { Object.assign(node, action.payload.updates); }
+            break;
+        }
+        case 'DELETE_FLOW_NODE': {
+            const { pageId, flowId, nodeId } = action.payload;
+            const page = draft.pages.find(p => p.id === pageId);
+            const flow = page?.logicFlows.find(f => f.id === flowId);
+            if (flow) {
+                (flow as any).nodes = flow.nodes.filter(n => n.id !== nodeId);
+                (flow as any).connections = flow.connections.filter(c => c.sourceNodeId !== nodeId && c.targetNodeId !== nodeId);
+                if (draft.selectedLogicNodeId === nodeId) { draft.selectedLogicNodeId = null; }
+            }
+            break;
+        }
+        case 'ADD_FLOW_CONNECTION': {
+            const page = draft.pages.find(p => p.id === action.payload.pageId);
+            const flow = page?.logicFlows.find(f => f.id === action.payload.flowId);
+            if (flow) {
+                const exists = flow.connections.some(c => 
+                    c.sourceNodeId === action.payload.connection.sourceNodeId &&
+                    c.sourceHandleId === action.payload.connection.sourceHandleId &&
+                    c.targetNodeId === action.payload.connection.targetNodeId &&
+                    c.targetHandleId === action.payload.connection.targetHandleId
+                );
+                if (!exists) { (flow.connections as Draft<FlowConnection>[]).push(action.payload.connection); }
+            }
+            break;
+        }
         case 'ADD_VARIANT_PROPERTY': {
             const comp = draft.customComponents.find(c => c.id === action.payload.componentId);
             if (comp) (comp.variantProperties as any).push(action.payload.property);
@@ -681,8 +746,35 @@ const appReducer = produce((draft: Draft<AppState>, action: Action) => {
             draft.globalStateDefinition = draft.globalStateDefinition.filter(v => v.name !== action.payload.name) as any;
             break;
         }
-        case 'EXECUTE_ACTIONS':
-            // This is handled by the non-reducer part of the context now
+        case 'EXECUTE_ACTIONS': {
+            for (const step of action.payload.actions) {
+                const { type, payload } = step;
+                switch (type) {
+                    case 'set_state':
+                        if (payload.stateKey) draft.runtimeState[payload.stateKey] = payload.value;
+                        break;
+                    case 'increment_state':
+                        if (payload.stateKey && typeof draft.runtimeState[payload.stateKey] === 'number') {
+                            draft.runtimeState[payload.stateKey]++;
+                        }
+                        break;
+                    case 'decrement_state':
+                        if (payload.stateKey && typeof draft.runtimeState[payload.stateKey] === 'number') {
+                            draft.runtimeState[payload.stateKey]--;
+                        }
+                        break;
+                    case 'toggle_state':
+                        if (payload.stateKey && typeof draft.runtimeState[payload.stateKey] === 'boolean') {
+                            draft.runtimeState[payload.stateKey] = !draft.runtimeState[payload.stateKey];
+                        }
+                        break;
+                    // Other simple sync actions can be added here
+                }
+            }
+            break;
+        }
+        case 'SET_RUNTIME_STATE':
+            draft.runtimeState = action.payload;
             break;
         case 'INITIALIZE_RUNTIME_STATE': {
             const page = draft.pages.find(p => p.id === action.payload.pageId);
@@ -695,7 +787,7 @@ const appReducer = produce((draft: Draft<AppState>, action: Action) => {
     }
 });
 
-const AppContext = createContext<{
+type AppContextValue = {
   state: DeepReadonly<AppState>;
   dispatch: Dispatch<Action>;
   undo: () => void;
@@ -705,29 +797,10 @@ const AppContext = createContext<{
   setSelectedElementId: (id: string | null) => void;
   updateElement: (id: string, updates: DeepPartial<Element>) => void;
   setPreviewMode: (isPreview: boolean) => void;
-}>({} as any);
-
-const isObject = (item: any): item is object => (item && typeof item === 'object' && !Array.isArray(item));
-
-const deepMerge = <T extends object, U extends object>(target: T, source: U): T & U => {
-    let output = { ...target } as T & U;
-    if (isObject(target) && isObject(source)) {
-        Object.keys(source).forEach(key => {
-            const sourceValue = (source as any)[key];
-            const targetValue = (target as any)[key];
-            if (isObject(sourceValue)) {
-                if (!(key in target)) {
-                    Object.assign(output, { [key]: sourceValue });
-                } else {
-                    (output as any)[key] = deepMerge(targetValue, sourceValue);
-                }
-            } else {
-                Object.assign(output, { [key]: sourceValue });
-            }
-        });
-    }
-    return output;
+  executeFlow: (flowId: string) => Promise<void>;
 };
+
+const AppContext = createContext<AppContextValue>({} as any);
 
 const initializer = (initialProjectSettings: { name: string, type: ProjectType }): AppState => {
     const savedStateRaw = localStorage.getItem('proverve-state');
@@ -749,6 +822,7 @@ const initializer = (initialProjectSettings: { name: string, type: ProjectType }
         codeSnippets: [],
         activePageId: null,
         selectedElementId: null,
+        selectedLogicNodeId: null,
         hoveredElementId: null,
         editingComponentId: null,
         viewport: 'desktop',
@@ -757,6 +831,7 @@ const initializer = (initialProjectSettings: { name: string, type: ProjectType }
         canvasZoom: 1,
         copiedStyles: null,
         altKeyPressed: false,
+        publishUrl: null,
         unsavedChanges: 0,
         commits: [],
         panelLayout: { leftSize: 280, rightSize: 320, bottomSize: 250 },
@@ -779,6 +854,7 @@ const initializer = (initialProjectSettings: { name: string, type: ProjectType }
     finalState.appMode = 'design';
     finalState.previewMode = false;
     finalState.selectedElementId = null;
+    finalState.selectedLogicNodeId = null;
     finalState.editingComponentId = null;
     finalState.hoveredElementId = null;
     finalState.altKeyPressed = false;
@@ -798,7 +874,7 @@ export const AppContextProvider: React.FC<{ children: ReactNode; initialProjectS
 
     const debouncedSave = React.useRef(
       (stateToSave: AppState) => {
-        const { history, runtimeState, visibleModalIds, selectedElementId, hoveredElementId, ...savableState } = stateToSave;
+        const { history, runtimeState, visibleModalIds, selectedElementId, hoveredElementId, publishUrl, ...savableState } = stateToSave;
         localStorage.setItem('proverve-state', JSON.stringify(savableState));
       }
     ).current;
@@ -816,6 +892,15 @@ export const AppContextProvider: React.FC<{ children: ReactNode; initialProjectS
         dispatch({ type: 'INITIALIZE_RUNTIME_STATE', payload: { pageId: state.activePageId } });
     }, [state.activePageId, state.pages]);
 
+    const executeFlow = async (flowId: string) => {
+        const page = state.pages.find(p => p.id === state.activePageId);
+        const flow = page?.logicFlows.find(f => f.id === flowId);
+        if (flow) {
+            const newState = await runFlow(flow, state.runtimeState, page.apiDataSources, state.mockApiEndpoints);
+            dispatch({ type: 'SET_RUNTIME_STATE', payload: newState });
+        }
+    };
+
     const undo = () => dispatch({ type: 'UNDO' });
     const redo = () => dispatch({ type: 'REDO' });
     const canUndo = state.history.past.length > 0;
@@ -824,7 +909,7 @@ export const AppContextProvider: React.FC<{ children: ReactNode; initialProjectS
     const updateElement = (id: string, updates: DeepPartial<Element>) => dispatch({ type: 'UPDATE_ELEMENT', payload: { id, updates } });
     const setPreviewMode = (isPreview: boolean) => dispatch({ type: 'SET_PREVIEW_MODE', payload: isPreview });
 
-    const contextValue = { state: state as DeepReadonly<AppState>, dispatch, undo, redo, canUndo, canRedo, setSelectedElementId, updateElement, setPreviewMode };
+    const contextValue = { state: state as DeepReadonly<AppState>, dispatch, undo, redo, canUndo, canRedo, setSelectedElementId, updateElement, setPreviewMode, executeFlow };
     return <AppContext.Provider value={contextValue}>{children}</AppContext.Provider>;
 };
 

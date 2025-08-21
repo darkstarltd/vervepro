@@ -1,10 +1,9 @@
-
-import React, { useState, useEffect, FC, KeyboardEvent, useRef } from 'react';
+import React, { useState, useEffect, FC, KeyboardEvent, useRef, useMemo } from 'react';
 import { 
-    Code, Smartphone, Terminal as TerminalIcon, Hammer, Wrench, Activity, Cpu, Database, Shield,
-    Power, AlertTriangle, Download, RefreshCw, Filter, Trash2, Pause, ArrowDown, Play, Save, Eye, Package, Lock, FileText, Folder, File, Wifi, BarChart, Server, Rocket
-} from 'lucide-react';
-import { ApkInfo, BuildTool, DeviceInfo, FileNode, LogEntry, BuildTarget, BuildStatus, DeepReadonly } from '../types';
+    FaCode, FaMobileScreenButton, FaTerminal, FaHammer, FaWrench, FaChartLine, FaMicrochip, FaDatabase, FaShieldHalved,
+    FaPowerOff, FaTriangleExclamation, FaDownload, FaRotate, FaFilter, FaTrash, FaPause, FaArrowDown, FaPlay, FaFloppyDisk, FaEye, FaBoxOpen, FaLock, FaFileLines, FaFolder, FaFile, FaWifi, FaChartBar, FaServer, FaRocket, FaLayerGroup, FaCodeBranch, FaPlugCircleXmark, FaGear
+} from 'react-icons/fa6';
+import { ApkInfo, BuildTool, DeviceInfo, FileNode, LogEntry, BuildTarget, BuildStatus, DeepReadonly, MagiskModule, XposedHook, SecurityFinding, Element, CustomComponent, Page } from '../types';
 import MonacoEditor from 'react-monaco-editor';
 import { StateInspector } from './StateInspector';
 import { MockApiEditor } from './MockApiEditor';
@@ -12,20 +11,44 @@ import { useAppContext } from '../context/AppContext';
 import { FileTreeView } from './FileTreeView';
 import { toast } from 'react-hot-toast';
 
-// --- MOCK DATA ---
-const MOCK_APK_INFO: ApkInfo = {
-  name: "Pro-Verve Companion",
-  packageName: "com.proverve.app",
-  version: "1.2.3",
-  size: "24.5 MB",
-  minSdk: "21",
-  targetSdk: "33",
-  permissions: ["INTERNET", "ACCESS_FINE_LOCATION", "CAMERA", "READ_EXTERNAL_STORAGE"],
-  activities: ["MainActivity", "SettingsActivity", "LoginActivity"],
-  services: ["BackgroundSyncService"],
-  receivers: ["BootCompletedReceiver"],
-  features: ["android.hardware.camera", "android.hardware.location.gps"],
-};
+// --- MOCK DATA (for parts that are not yet dynamic) ---
+const MOCK_DECOMPILED_SOURCES: FileNode[] = [
+    { name: 'com.proverve.app', type: 'folder', children: [
+        { name: 'activities', type: 'folder', children: [
+            { name: 'MainActivity.java', type: 'file', content: 'public class MainActivity extends AppCompatActivity { ... }' },
+            { name: 'SettingsActivity.java', type: 'file', content: 'public class SettingsActivity extends AppCompatActivity { ... }' },
+        ]},
+        { name: 'services', type: 'folder', children: [
+            { name: 'BackgroundSyncService.java', type: 'file', content: 'public class BackgroundSyncService extends Service { ... }' },
+        ]},
+        { name: 'utils', type: 'folder', children: [
+            { name: 'NetworkUtils.java', type: 'file', content: 'public class NetworkUtils { ... }' },
+        ]}
+    ]},
+    { name: 'BuildConfig.java', type: 'file', content: 'public final class BuildConfig { ... }' }
+];
+
+const MOCK_RESOURCES: FileNode[] = [
+    { name: 'res', type: 'folder', children: [
+        { name: 'layout', type: 'folder', children: [
+            { name: 'activity_main.xml', type: 'file', content: '<RelativeLayout ...></RelativeLayout>' }
+        ]},
+        { name: 'drawable', type: 'folder', children: [
+            { name: 'ic_launcher.png', type: 'file' }
+        ]},
+        { name: 'values', type: 'folder', children: [
+             { name: 'strings.xml', type: 'file', content: '<resources><string name="app_name">Pro-Verve</string></resources>' }
+        ]}
+    ]},
+    { name: 'AndroidManifest.xml', type: 'file', content: '<manifest ...></manifest>' }
+];
+
+const MOCK_SECURITY_REPORT: SecurityFinding[] = [
+    { id: 'sec1', severity: 'High', title: 'Hardcoded API Key', description: 'An API key was found hardcoded in NetworkUtils.java. This could allow an attacker to make unauthorized API calls.', resolution: 'Store API keys securely in a secrets management system and retrieve them at runtime.' },
+    { id: 'sec2', severity: 'Medium', title: 'Insecure Data Storage', description: 'User preferences are stored in SharedPreferences without encryption, potentially exposing sensitive information on a rooted device.', resolution: 'Use EncryptedSharedPreferences from the AndroidX Security library to store sensitive data.' },
+    { id: 'sec3', severity: 'Low', title: 'App Allows Backups', description: 'The allowBackup flag is set to true in the AndroidManifest.xml, which could allow an attacker with physical access to the device to extract app data.', resolution: 'Set android:allowBackup="false" in the manifest if you do not require backups.' },
+    { id: 'sec4', severity: 'Info', title: 'App in Debuggable Mode', description: 'The application is marked as debuggable, which is not recommended for production builds.', resolution: 'Ensure android:debuggable is set to "false" for release builds.' }
+];
 
 const MOCK_DEVICES: DeviceInfo[] = [
   { id: 'emulator-5554', name: 'Pixel 7 Pro (Emulator)', platform: 'Android', status: 'connected', apiLevel: '33' },
@@ -42,6 +65,20 @@ const MOCK_BUILD_TOOLS: BuildTool[] = [
   { name: 'React Native CLI', version: '11.3.6', status: 'installed' },
 ];
 
+const MOCK_MAGISK_MODULES: MagiskModule[] = [
+    { id: 'mag1', name: 'Systemless Hosts', author: 'topjohnwu', version: '1.0', enabled: true },
+    { id: 'mag2', name: 'AdAway', author: 'AdAway Team', version: '4.3.2', enabled: true },
+    { id: 'mag3', name: 'GPay SQLite Fix', author: 'sproke', version: '2.1', enabled: false },
+    { id: 'mag4', name: 'YouTube Vanced', author: 'TeamVanced', version: '16.29.39', enabled: true },
+];
+
+const MOCK_XPOSED_HOOKS: XposedHook[] = [
+    { id: 'xpo1', name: 'GravityBox [A13]', targetClass: 'com.android.systemui', targetMethod: '*', description: 'System-wide UI tweaks and customizations.', enabled: true },
+    { id: 'xpo2', name: 'Greenify', targetClass: 'android.app.ActivityManager', targetMethod: 'forceStopPackage', description: 'Hibernates background apps to save battery.', enabled: true },
+    { id: 'xpo3', name: 'SSL Unpinning', targetClass: 'javax.net.ssl.TrustManager', targetMethod: 'checkServerTrusted', description: 'Bypasses SSL certificate pinning for network analysis.', enabled: false },
+];
+
+
 const generateLog = (): LogEntry => {
     const levels: LogEntry['level'][] = ['info', 'debug', 'warn', 'error'];
     const sources = ['MainActivity', 'NetworkService', 'GLSUser', 'HttpTransport', 'RenderThread'];
@@ -53,6 +90,51 @@ const generateLog = (): LogEntry => {
         message: messages[Math.floor(Math.random() * messages.length)],
     }
 }
+
+// --- Dynamic APK Info Generator ---
+const generateDynamicApkInfo = (projectName: string, pages: readonly DeepReadonly<Page>[], customComponents: readonly DeepReadonly<CustomComponent>[]): ApkInfo => {
+    const permissions = new Set<string>();
+    const dependencies = new Set<string>(["androidx.appcompat:appcompat:1.6.1", "com.google.android.material:material:1.9.0"]);
+    
+    const scanElements = (elements: readonly DeepReadonly<Element>[]) => {
+        for (const element of elements) {
+            if (element.type === 'Image' && element.props?.src?.startsWith('http')) {
+                permissions.add('INTERNET');
+            }
+            if (element.type === 'LottieAnimation') {
+                dependencies.add('com.airbnb.android:lottie-compose:6.1.0');
+            }
+            if (element.type === 'ARView') {
+                permissions.add('CAMERA');
+            }
+            if (element.children) {
+                scanElements(element.children);
+            }
+        }
+    };
+
+    pages.forEach(page => scanElements(page.elements));
+    customComponents.forEach(comp => scanElements([comp.mainElement]));
+
+    return {
+        name: projectName,
+        packageName: `com.${projectName.toLowerCase().replace(/\s+/g, '')}.app`,
+        version: "1.0.0",
+        size: `${(Math.random() * 15 + 5).toFixed(1)} MB`,
+        minSdk: "24",
+        targetSdk: "34",
+        permissions: Array.from(permissions),
+        activities: ["MainActivity"],
+        services: [],
+        receivers: [],
+        features: Array.from(permissions).map(p => `android.hardware.${p.toLowerCase()}`),
+        decompiledSources: MOCK_DECOMPILED_SOURCES,
+        resources: MOCK_RESOURCES,
+        dependencies: Array.from(dependencies),
+        securityReport: MOCK_SECURITY_REPORT,
+    };
+};
+
 
 // --- Sub-component: Performance Chart ---
 const PerformanceChart: FC<{ title: string; icon: React.ReactNode; color: string; unit: string; max: number }> = ({ title, icon, color, unit, max }) => {
@@ -134,7 +216,7 @@ const DevelopmentView = () => {
             <div className="md:col-span-2 h-full bg-[var(--color-surface)] rounded-lg overflow-hidden flex flex-col">
                 <div className="flex-shrink-0 p-2 border-b border-[var(--color-border)] flex justify-between items-center">
                     <span className="font-mono text-sm">{selectedPath || 'No file selected'}</span>
-                    <button onClick={handleSave} disabled={!selectedFileNode} className="flex items-center gap-2 text-sm px-3 py-1 bg-[var(--color-surface-light)] hover:bg-[var(--color-border)] rounded-md disabled:opacity-50"><Save size={14}/> Save</button>
+                    <button onClick={handleSave} disabled={!selectedFileNode} className="flex items-center gap-2 text-sm px-3 py-1 bg-[var(--color-surface-light)] hover:bg-[var(--color-border)] rounded-md disabled:opacity-50"><FaFloppyDisk /> Save</button>
                 </div>
                 <div className="flex-1 relative">
                 <MonacoEditor
@@ -151,53 +233,49 @@ const DevelopmentView = () => {
     );
 };
 
-// --- Sub-component: APK Analyzer ---
-const APKAnalyzer = () => {
-    type ApkTab = 'overview' | 'permissions' | 'scan' | 'manifest';
-    const [activeTab, setActiveTab] = useState<ApkTab>('overview');
-    const [isScanning, setIsScanning] = useState(true);
-
-    useEffect(() => {
-        setIsScanning(true);
-        const timer = setTimeout(() => setIsScanning(false), 3000);
-        return () => clearTimeout(timer);
-    }, [activeTab]);
+// --- Sub-component: APK Analyzer (Advanced) ---
+const APKAnalyzer: FC<{apkInfo: ApkInfo}> = ({ apkInfo }) => {
+    type ApkTab = 'sources' | 'resources' | 'dependencies' | 'scan';
+    const [activeTab, setActiveTab] = useState<ApkTab>('scan');
 
     const tabs: {id: ApkTab, label: string, icon: React.ReactNode}[] = [
-        {id: 'overview', label: 'Overview', icon: <Eye size={16}/>},
-        {id: 'permissions', label: 'Permissions', icon: <Lock size={16}/>},
-        {id: 'scan', label: 'Security Scan', icon: <Shield size={16}/>},
-        {id: 'manifest', label: 'Manifest', icon: <FileText size={16}/>}
+        {id: 'scan', label: 'Security', icon: <FaShieldHalved />},
+        {id: 'sources', label: 'Sources', icon: <FaCode />},
+        {id: 'resources', label: 'Resources', icon: <FaLayerGroup />},
+        {id: 'dependencies', label: 'Dependencies', icon: <FaCodeBranch />},
     ];
+    
+    const severityColors: Record<SecurityFinding['severity'], string> = {
+        'High': 'bg-red-500/20 text-red-400',
+        'Medium': 'bg-yellow-500/20 text-yellow-400',
+        'Low': 'bg-green-500/20 text-green-400',
+        'Info': 'bg-blue-500/20 text-blue-400'
+    };
 
     const renderContent = () => {
-        if (isScanning && activeTab==='scan') return <div className="flex items-center justify-center h-48"><RefreshCw className="animate-spin mr-2"/> Scanning...</div>;
-
         switch(activeTab) {
-            case 'overview': return (
-                <div className="grid grid-cols-2 gap-4 text-sm">
-                    <div><strong>App Name:</strong> {MOCK_APK_INFO.name}</div>
-                    <div><strong>Package Name:</strong> {MOCK_APK_INFO.packageName}</div>
-                    <div><strong>Version:</strong> {MOCK_APK_INFO.version}</div>
-                    <div><strong>Size:</strong> {MOCK_APK_INFO.size}</div>
-                    <div><strong>Min SDK:</strong> {MOCK_APK_INFO.minSdk}</div>
-                    <div><strong>Target SDK:</strong> {MOCK_APK_INFO.targetSdk}</div>
-                </div>
-            );
-            case 'permissions': return (
-                <div className="grid grid-cols-2 gap-2 text-sm">
-                    {MOCK_APK_INFO.permissions.map(p => <div key={p} className="bg-[var(--color-surface)] p-2 rounded-md">android.permission.{p}</div>)}
+            case 'sources': return <div className="h-96 overflow-y-auto"><FileTreeView nodes={apkInfo.decompiledSources} onSelect={()=>{}} selectedPath={null} /></div>;
+            case 'resources': return <div className="h-96 overflow-y-auto"><FileTreeView nodes={apkInfo.resources} onSelect={()=>{}} selectedPath={null} /></div>;
+            case 'dependencies': return (
+                 <div className="space-y-2 text-sm font-mono max-h-96 overflow-y-auto">
+                    {apkInfo.dependencies.map(dep => <div key={dep} className="bg-[var(--color-surface)] p-2 rounded-md">{dep}</div>)}
                 </div>
             );
             case 'scan': return (
-                 <div className="text-center">
-                    <Shield size={48} className="mx-auto text-green-400 mb-4"/>
-                    <h3 className="text-lg font-bold">No Security Issues Found</h3>
-                    <p className="text-sm text-[var(--color-text-secondary)]">Scanned 143 files. 0 vulnerabilities detected.</p>
+                <div className="space-y-3 max-h-96 overflow-y-auto">
+                    {apkInfo.securityReport.map(finding => (
+                        <details key={finding.id} className={`p-3 rounded-lg ${severityColors[finding.severity]}`}>
+                            <summary className="font-bold cursor-pointer flex justify-between items-center">
+                                <span>{finding.title}</span>
+                                <span className={`text-xs px-2 py-0.5 rounded-full ${severityColors[finding.severity]}`}>{finding.severity}</span>
+                            </summary>
+                            <div className="mt-2 text-sm space-y-2 border-t border-current/20 pt-2">
+                                <p><strong>Description:</strong> {finding.description}</p>
+                                <p><strong>Resolution:</strong> {finding.resolution}</p>
+                            </div>
+                        </details>
+                    ))}
                 </div>
-            );
-            case 'manifest': return (
-                <pre className="text-xs bg-[var(--color-surface)] p-2 rounded-md max-h-48 overflow-auto"><code>Placeholder for AndroidManifest.xml</code></pre>
             );
         }
     };
@@ -206,13 +284,12 @@ const APKAnalyzer = () => {
         <div className="bg-[var(--color-surface)] p-4 rounded-lg">
             <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
-                    <Package size={24} className="text-[var(--color-primary)]"/>
+                    <FaBoxOpen size={24} className="text-[var(--color-primary)]"/>
                     <div>
-                        <h3 className="font-bold">APK Analysis</h3>
-                        <p className="text-xs text-[var(--color-text-secondary)]">{MOCK_APK_INFO.name}</p>
+                        <h3 className="font-bold">APK Analysis: {apkInfo.name}</h3>
+                        <p className="text-xs text-[var(--color-text-secondary)]">{apkInfo.packageName}</p>
                     </div>
                 </div>
-                <button className="flex items-center gap-2 text-sm px-3 py-1.5 bg-[var(--color-surface-light)] hover:bg-[var(--color-border)] rounded-md"><Download size={14}/> Upload APK</button>
             </div>
             <div className="flex border-b border-[var(--color-border)] mb-4">
                 {tabs.map(t => <button key={t.id} onClick={() => setActiveTab(t.id)} className={`flex items-center gap-2 px-4 py-2 text-sm ${activeTab === t.id ? 'text-white border-b-2 border-[var(--color-primary)]' : 'text-[var(--color-text-secondary)] hover:text-white'}`}>{t.icon}{t.label}</button>)}
@@ -230,7 +307,7 @@ const DeviceManager = () => (
             {MOCK_DEVICES.map(d => (
                 <div key={d.id} className="flex items-center justify-between p-2 bg-[var(--color-surface-light)] rounded-md">
                     <div className="flex items-center gap-3">
-                        <Smartphone className={`w-6 h-6 ${d.status === 'connected' ? 'text-green-400' : 'text-gray-500'}`} />
+                        <FaMobileScreenButton className={`w-6 h-6 ${d.status === 'connected' ? 'text-green-400' : 'text-gray-500'}`} />
                         <div>
                             <p className="font-semibold">{d.name}</p>
                             <p className="text-xs text-[var(--color-text-secondary)]">{d.platform} {d.apiLevel}</p>
@@ -238,8 +315,8 @@ const DeviceManager = () => (
                     </div>
                     <div className="flex items-center gap-2">
                          <span className={`text-xs px-2 py-0.5 rounded-full ${d.status === 'connected' ? 'bg-green-500/20 text-green-400' : 'bg-gray-500/20 text-gray-400'}`}>{d.status}</span>
-                         <button disabled={d.status !== 'connected'} className="p-1 hover:bg-[var(--color-border)] rounded-md disabled:opacity-50"><RefreshCw size={14}/></button>
-                         <button disabled={d.status !== 'connected'} className="p-1 hover:bg-[var(--color-border)] rounded-md disabled:opacity-50"><Power size={14}/></button>
+                         <button disabled={d.status !== 'connected'} className="p-1 hover:bg-[var(--color-border)] rounded-md disabled:opacity-50"><FaRotate /></button>
+                         <button disabled={d.status !== 'connected'} className="p-1 hover:bg-[var(--color-border)] rounded-md disabled:opacity-50"><FaPowerOff /></button>
                     </div>
                 </div>
             ))}
@@ -273,8 +350,8 @@ const LogcatViewer = () => {
                 <h3 className="font-bold text-sm">Logcat</h3>
                 <div className="flex items-center gap-2">
                     <input type="text" placeholder="Filter logs..." className="bg-[var(--color-background)] text-xs px-2 py-1 rounded-md border border-[var(--color-border)]" />
-                    <button onClick={() => setIsPaused(!isPaused)} className="p-1 hover:bg-[var(--color-border)] rounded-md">{isPaused ? <Play size={14}/> : <Pause size={14}/>}</button>
-                    <button onClick={() => setLogs([])} className="p-1 hover:bg-[var(--color-border)] rounded-md"><Trash2 size={14}/></button>
+                    <button onClick={() => setIsPaused(!isPaused)} className="p-1 hover:bg-[var(--color-border)] rounded-md">{isPaused ? <FaPlay /> : <FaPause />}</button>
+                    <button onClick={() => setLogs([])} className="p-1 hover:bg-[var(--color-border)] rounded-md"><FaTrash /></button>
                 </div>
             </div>
             <div className="flex-1 p-2 overflow-y-auto font-mono text-xs">
@@ -292,30 +369,50 @@ const LogcatViewer = () => {
     );
 };
 
-// --- Sub-component: Build Tools Manager ---
-const BuildToolsManager = () => {
-    const statusInfo: {[key in BuildTool['status']]: {color: string, icon: React.ReactNode}} = {
-        installed: { color: 'text-green-400', icon: <Wrench size={16}/> },
-        outdated: { color: 'text-yellow-400', icon: <AlertTriangle size={16}/> },
-        missing: { color: 'text-red-500', icon: <Download size={16}/> },
-    };
+// --- Sub-component: System Tools ---
+const SystemTools = () => {
+    const [isRooted, setIsRooted] = useState(true);
+    const [magiskModules, setMagiskModules] = useState(MOCK_MAGISK_MODULES);
+    const [xposedHooks, setXposedHooks] = useState(MOCK_XPOSED_HOOKS);
+
+    const toggleModule = (id: string) => setMagiskModules(mods => mods.map(m => m.id === id ? {...m, enabled: !m.enabled} : m));
+    const toggleHook = (id: string) => setXposedHooks(hooks => hooks.map(h => h.id === id ? {...h, enabled: !h.enabled} : h));
 
     return (
-        <div className="bg-[var(--color-surface)] p-4 rounded-lg">
-            <h3 className="font-bold mb-4">Build Toolchain</h3>
-            <div className="space-y-2">
-                {MOCK_BUILD_TOOLS.map(tool => (
-                    <div key={tool.name} className="flex items-center justify-between p-2 bg-[var(--color-surface-light)] rounded-md text-sm">
-                         <div className="flex items-center gap-3">
-                            <span className={statusInfo[tool.status].color}>{statusInfo[tool.status].icon}</span>
-                            <div>
-                                <p>{tool.name}</p>
-                                <p className="text-xs text-[var(--color-text-secondary)]">{tool.version}</p>
-                            </div>
-                        </div>
-                        <span className={`font-semibold ${statusInfo[tool.status].color}`}>{tool.status}</span>
+        <div className="grid grid-cols-2 gap-4 h-full">
+            <div className="bg-[var(--color-surface)] p-4 rounded-lg flex flex-col">
+                <div className="flex justify-between items-center mb-4">
+                    <h3 className="font-bold">Magisk Module Manager</h3>
+                    <div className="flex items-center gap-2 text-sm">
+                        <span className={isRooted ? 'text-green-400' : 'text-gray-400'}>Root Access</span>
+                        <label className="toggle-switch"><input type="checkbox" checked={isRooted} onChange={() => setIsRooted(!isRooted)} /><span className="toggle-slider"></span></label>
                     </div>
-                ))}
+                </div>
+                <div className="space-y-2 overflow-y-auto">
+                    {magiskModules.map(mod => (
+                        <div key={mod.id} className="flex items-center justify-between p-2 bg-[var(--color-surface-light)] rounded-md text-sm">
+                            <div>
+                                <p>{mod.name} <span className="text-xs text-gray-400">{mod.version}</span></p>
+                                <p className="text-xs text-gray-400">by {mod.author}</p>
+                            </div>
+                            <label className="toggle-switch"><input type="checkbox" checked={mod.enabled} onChange={() => toggleModule(mod.id)} disabled={!isRooted} /><span className="toggle-slider"></span></label>
+                        </div>
+                    ))}
+                </div>
+            </div>
+            <div className="bg-[var(--color-surface)] p-4 rounded-lg flex flex-col">
+                <h3 className="font-bold mb-4">LSPosed Hook Manager</h3>
+                <div className="space-y-2 overflow-y-auto">
+                    {xposedHooks.map(hook => (
+                        <div key={hook.id} className="flex items-center justify-between p-2 bg-[var(--color-surface-light)] rounded-md text-sm">
+                            <div>
+                                <p>{hook.name}</p>
+                                <p className="text-xs text-gray-400 font-mono" title={hook.description}>{hook.targetClass}.{hook.targetMethod}</p>
+                            </div>
+                             <label className="toggle-switch"><input type="checkbox" checked={hook.enabled} onChange={() => toggleHook(hook.id)} disabled={!isRooted} /><span className="toggle-slider"></span></label>
+                        </div>
+                    ))}
+                </div>
             </div>
         </div>
     );
@@ -383,7 +480,7 @@ const BuildDeploy = () => {
                 </div>
                 <div className="mt-auto">
                     <button onClick={handleBuild} disabled={buildState.status === 'building'} className="w-full py-3 bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] rounded-lg font-bold disabled:opacity-50 flex items-center justify-center gap-2">
-                        {buildState.status === 'building' ? <RefreshCw className="animate-spin" /> : <Rocket />}
+                        {buildState.status === 'building' ? <FaRotate className="animate-spin" /> : <FaRocket />}
                         Build & Deploy
                     </button>
                 </div>
@@ -409,26 +506,31 @@ const BuildDeploy = () => {
 };
 
 // --- Main DevTools Component ---
-type TabId = 'build' | 'dev' | 'apk' | 'devices' | 'perf' | 'tools' | 'state' | 'api';
+type TabId = 'build' | 'dev' | 'apk' | 'system' | 'devices' | 'perf' | 'state' | 'api';
 export const DevTools: FC = () => {
-    const [activeTab, setActiveTab] = useState<TabId>('build');
+    const { state } = useAppContext();
+    const { projectName, pages, customComponents } = state;
+    const [activeTab, setActiveTab] = useState<TabId>('apk');
+
+    const dynamicApkInfo = useMemo(() => generateDynamicApkInfo(projectName, pages, customComponents), [projectName, pages, customComponents]);
 
     const tabs: { id: TabId, name: string, icon: React.ReactNode }[] = [
-        { id: 'build', name: 'Build', icon: <Rocket size={20} /> },
-        { id: 'dev', name: 'Code', icon: <Code size={20} /> },
-        { id: 'apk', name: 'APK Analysis', icon: <Package size={20} /> },
-        { id: 'devices', name: 'Devices & Logs', icon: <Smartphone size={20} /> },
-        { id: 'perf', name: 'Performance', icon: <Activity size={20} /> },
-        { id: 'tools', name: 'Build Tools', icon: <Hammer size={20} /> },
-        { id: 'state', name: 'State', icon: <BarChart size={20} /> },
-        { id: 'api', name: 'Mock API', icon: <Server size={20} /> },
+        { id: 'build', name: 'Build', icon: <FaRocket /> },
+        { id: 'dev', name: 'Code', icon: <FaCode /> },
+        { id: 'apk', name: 'Analysis', icon: <FaBoxOpen /> },
+        { id: 'system', name: 'System', icon: <FaGear /> },
+        { id: 'devices', name: 'Devices', icon: <FaMobileScreenButton /> },
+        { id: 'perf', name: 'Perf', icon: <FaChartLine /> },
+        { id: 'state', name: 'State', icon: <FaChartBar /> },
+        { id: 'api', name: 'Mock API', icon: <FaServer /> },
     ];
 
     const renderContent = () => {
         switch(activeTab) {
             case 'build': return <BuildDeploy />;
             case 'dev': return <DevelopmentView />;
-            case 'apk': return <APKAnalyzer />;
+            case 'apk': return <APKAnalyzer apkInfo={dynamicApkInfo} />;
+            case 'system': return <SystemTools />;
             case 'devices': return (
                 <div className="flex flex-col gap-4 h-full">
                     <div className="flex-1"><DeviceManager/></div>
@@ -438,16 +540,15 @@ export const DevTools: FC = () => {
             case 'perf': return (
                 <div className="flex flex-col gap-4">
                     <div className="flex gap-4">
-                        <PerformanceChart title="CPU" icon={<Cpu size={16}/>} color="#8A42F4" unit="%" max={100} />
-                        <PerformanceChart title="Memory" icon={<Database size={16}/>} color="#00E0FF" unit="MB" max={4096} />
+                        <PerformanceChart title="CPU" icon={<FaMicrochip />} color="#8A42F4" unit="%" max={100} />
+                        <PerformanceChart title="Memory" icon={<FaDatabase />} color="#00E0FF" unit="MB" max={4096} />
                     </div>
                     <div className="flex gap-4">
-                         <PerformanceChart title="Network" icon={<Wifi size={16}/>} color="#F44336" unit="kb/s" max={2000} />
-                         <PerformanceChart title="Disk I/O" icon={<Save size={16}/>} color="#4CAF50" unit="mb/s" max={50} />
+                         <PerformanceChart title="Network" icon={<FaWifi />} color="#F44336" unit="kb/s" max={2000} />
+                         <PerformanceChart title="Disk I/O" icon={<FaFloppyDisk />} color="#4CAF50" unit="mb/s" max={50} />
                     </div>
                 </div>
             );
-            case 'tools': return <BuildToolsManager />;
             case 'state': return <StateInspector />;
             case 'api': return <MockApiEditor />;
         }

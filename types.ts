@@ -10,6 +10,33 @@ export interface FileNode {
   icon?: ReactNode;
 }
 
+// --- NEW: ADVANCED DEVTOOLS TYPES ---
+export interface MagiskModule {
+    id: string;
+    name: string;
+    author: string;
+    version: string;
+    enabled: boolean;
+}
+
+export interface XposedHook {
+    id: string;
+    name: string;
+    targetClass: string;
+    targetMethod: string;
+    description: string;
+    enabled: boolean;
+}
+
+export interface SecurityFinding {
+    id: string;
+    severity: 'High' | 'Medium' | 'Low' | 'Info';
+    title: string;
+    description: string;
+    resolution: string;
+}
+// --- END: ADVANCED DEVTOOLS TYPES ---
+
 export interface ApkInfo {
   name: string;
   packageName: string;
@@ -22,6 +49,11 @@ export interface ApkInfo {
   services: string[];
   receivers: string[];
   features: string[];
+  // --- NEW: Detailed APK analysis fields
+  decompiledSources: FileNode[];
+  resources: FileNode[];
+  dependencies: string[];
+  securityReport: SecurityFinding[];
 }
 
 export interface BuildTool {
@@ -186,7 +218,7 @@ export interface DataSource {
   };
 }
 
-export type ElementType = 'heading' | 'text' | 'button' | 'image' | 'container' | 'flex' | 'grid' | 'form' | 'input' | 'textarea' | 'label' | 'modal' | 'hero-section' | 'stats-section' | 'testimonial' | 'pricing-table' | 'View' | 'Text' | 'Image' | 'Button' | 'TextInput' | 'Container' | 'Column' | 'Row' | 'ElevatedButton' | 'component-instance' | 'icon' | 'card' | 'navbar' | 'video' | 'scrollView' | 'ARView' | 'footer' | 'custom-code' | 'link' | 'divider' | 'spacer' | 'tabs' | 'tab-panel' | 'badge' | 'list' | 'table' | 'chart' | 'progress-bar' | 'accordion' | 'slot';
+export type ElementType = 'heading' | 'text' | 'button' | 'image' | 'container' | 'flex' | 'grid' | 'form' | 'input' | 'textarea' | 'label' | 'modal' | 'hero-section' | 'stats-section' | 'testimonial' | 'pricing-table' | 'View' | 'Text' | 'Image' | 'Button' | 'TextInput' | 'Container' | 'Column' | 'Row' | 'ElevatedButton' | 'component-instance' | 'icon' | 'card' | 'navbar' | 'video' | 'scrollView' | 'ARView' | 'footer' | 'custom-code' | 'link' | 'divider' | 'spacer' | 'tabs' | 'tab-panel' | 'badge' | 'list' | 'table' | 'chart' | 'progress-bar' | 'accordion' | 'slot' | 'Card' | 'FloatingActionButton' | 'Chip' | 'LottieAnimation' | 'ShimmerLayout';
 
 export interface Element {
   id: string;
@@ -263,7 +295,10 @@ export interface FlowNode {
   position: { x: number; y: number };
   inputs: FlowHandle[];
   outputs: FlowHandle[];
-  data: { [key: string]: any };
+  data: { 
+    [key: string]: any;
+    toastType?: 'success' | 'error' | 'loading' | 'blank';
+  };
 }
 export interface FlowConnection {
   id: string;
@@ -401,6 +436,7 @@ export interface AppState {
   codeSnippets: CodeSnippet[];
   activePageId: string | null;
   selectedElementId: string | null;
+  selectedLogicNodeId: string | null;
   hoveredElementId: string | null; 
   editingComponentId: string | null;
   viewport: Viewport;
@@ -409,6 +445,7 @@ export interface AppState {
   canvasZoom: number;
   copiedStyles: CopiedStyles | null;
   altKeyPressed: boolean; 
+  publishUrl: string | null;
   // Source Control
   unsavedChanges: number;
   commits: Commit[];
@@ -434,7 +471,7 @@ export interface AppState {
 }
 
 // The data part of the state, which is what we record in history.
-export type PresentState = Omit<AppState, 'runtimeState' | 'history' | 'visibleModalIds' | 'copiedStyles' | 'altKeyPressed' | 'hoveredElementId' | 'unsavedChanges' | 'commits' | 'multiplayerCursors' | 'appMode' | 'previewMode' | 'panelLayout' | 'panels' | 'buildState'>;
+export type PresentState = Omit<AppState, 'runtimeState' | 'history' | 'visibleModalIds' | 'copiedStyles' | 'altKeyPressed' | 'hoveredElementId' | 'unsavedChanges' | 'commits' | 'multiplayerCursors' | 'appMode' | 'previewMode' | 'panelLayout' | 'panels' | 'buildState' | 'selectedLogicNodeId' | 'selectedElementId' | 'publishUrl'>;
 
 
 // A recursive type for element templates that don't have IDs yet.

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useAppContext } from '../context/AppContext';
 import { ThemeToken, ThemeState } from '../types';
 import { CollapsibleSection } from './StylePropertyEditor';
-import { Plus, Trash2, Sparkles } from 'lucide-react';
+import { FaPlus, FaTrash, FaWandMagicSparkles } from 'react-icons/fa6';
 import { v4 as uuidv4 } from 'uuid';
 import { GlobalClassesManager } from './GlobalClassesManager';
 
@@ -59,11 +59,11 @@ const TokenManager: React.FC<{
                             className="w-full bg-[var(--color-background)] p-1 rounded text-sm"
                             placeholder="Value"
                         />
-                        <button onClick={() => handleDelete(token.id)} className="text-gray-400 hover:text-red-500"><Trash2/></button>
+                        <button onClick={() => handleDelete(token.id)} className="text-gray-400 hover:text-red-500"><FaTrash/></button>
                     </div>
                 ))}
                 <button onClick={handleAdd} className="w-full text-xs text-center p-1 bg-[var(--color-surface-light)] hover:bg-[var(--color-border)] rounded-md flex items-center justify-center gap-1">
-                    <Plus /> Add {title.slice(0, -1)}
+                    <FaPlus /> Add {title.slice(0, -1)}
                 </button>
             </div>
         </CollapsibleSection>
@@ -118,7 +118,7 @@ export const ThemePanel: React.FC<{ onAiTheme: () => void }> = ({ onAiTheme }) =
                 onClick={onAiTheme}
                 className="w-full mb-4 px-4 py-2 bg-[var(--color-surface-light)] hover:bg-[var(--color-border)] text-sm font-medium rounded-md flex items-center justify-center gap-2"
             >
-                <Sparkles /> AI Theme Assistant
+                <FaWandMagicSparkles /> AI Theme Assistant
             </button>
             <TypographyManager />
             <TokenManager title="Colors" tokenType="colors" tokens={theme.colors} />

@@ -3,7 +3,7 @@ import { Element, ElementAnimation, AnimationKeyframe, AnimationTriggerType } fr
 import { CollapsibleSection } from './StylePropertyEditor';
 import { useAppContext } from '../context/AppContext';
 import { v4 as uuidv4 } from 'uuid';
-import { Plus, Trash2 } from 'lucide-react';
+import { FaPlus, FaTrash } from 'react-icons/fa6';
 
 interface AnimationPropertyEditorProps {
     element: Element;
@@ -85,11 +85,11 @@ const AnimationTimeline: React.FC<{
                         <div className="flex-1">
                              <KeyframeEditor elementId={elementId} animation={animation} keyframe={kf} />
                         </div>
-                        <button onClick={() => handleDeleteKeyframe(kf.id)} className="mt-3 p-1 text-gray-400 hover:text-red-500"><Trash2 size={14} /></button>
+                        <button onClick={() => handleDeleteKeyframe(kf.id)} className="mt-3 p-1 text-gray-400 hover:text-red-500"><FaTrash size={14} /></button>
                     </div>
                 ))}
                 <button onClick={handleAddKeyframe} className="w-full text-xs text-center p-1 bg-[var(--color-surface-light)] hover:bg-[var(--color-border)] rounded-md flex items-center justify-center gap-1">
-                    <Plus /> Add Keyframe
+                    <FaPlus /> Add Keyframe
                 </button>
             </div>
         </CollapsibleSection>

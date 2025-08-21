@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ImageIcon as ImageIconLucide, Star, Droplets, Download } from 'lucide-react';
+import { FaImage, FaStar, FaDroplet, FaDownload } from 'react-icons/fa6';
 import { generateImageFromPrompt, generateIconFromPrompt } from '../lib/ai';
 import { Asset } from '../types';
 import { toast } from 'react-hot-toast';
@@ -54,9 +54,9 @@ export const AssetStudioModal: React.FC<{
   }
 
   const tabs: { id: Tab, name: string, icon: React.ReactNode }[] = [
-    { id: 'image', name: 'Image', icon: <ImageIconLucide size={16} /> },
-    { id: 'icon', name: 'Icon', icon: <Star size={16} /> },
-    { id: 'background', name: 'Background', icon: <Droplets size={16} /> },
+    { id: 'image', name: 'Image', icon: <FaImage size={16} /> },
+    { id: 'icon', name: 'Icon', icon: <FaStar size={16} /> },
+    { id: 'background', name: 'Background', icon: <FaDroplet size={16} /> },
   ];
 
   return (
@@ -86,7 +86,7 @@ export const AssetStudioModal: React.FC<{
             <div className="w-2/3 p-6 overflow-y-auto">
                 {generatedAssets.length === 0 ? (
                     <div className="h-full flex flex-col items-center justify-center text-[var(--color-text-tertiary)]">
-                        <ImageIconLucide size={64}/>
+                        <FaImage size={64}/>
                         <p className="mt-4">Your generated assets will appear here.</p>
                     </div>
                 ) : (
@@ -98,7 +98,7 @@ export const AssetStudioModal: React.FC<{
                                     <p className="text-xs text-white truncate">{asset.prompt}</p>
                                     <div className="flex justify-end gap-2">
                                         <button onClick={() => handleAdd(asset)} className="p-2 bg-[var(--color-primary)] rounded-full hover:bg-[var(--color-primary-hover)]" title="Add to project assets"><PlusIcon size={16}/></button>
-                                        <a href={asset.url} download={`${asset.prompt.slice(0,20)}.png`} className="p-2 bg-[var(--color-surface-light)] rounded-full hover:bg-[var(--color-border)]" title="Download"><Download size={16}/></a>
+                                        <a href={asset.url} download={`${asset.prompt.slice(0,20)}.png`} className="p-2 bg-[var(--color-surface-light)] rounded-full hover:bg-[var(--color-border)]" title="Download"><FaDownload size={16}/></a>
                                     </div>
                                 </div>
                             </div>

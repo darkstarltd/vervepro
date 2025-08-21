@@ -1,59 +1,58 @@
 import React, { useState } from 'react';
 import { useAppContext } from '../context/AppContext';
-import { CollapsibleSection } from './StylePropertyEditor';
-import { Plus, Trash2, Database, Network, FolderTree } from 'lucide-react';
+import { FaPlus, FaTrash, FaDatabase, FaNetworkWired, FaSitemap, FaChartBar, FaGlobe } from 'react-icons/fa6';
 import { AnyDataSource, RestApiDataSource, PostgresDataSource, FirestoreDataSource, DeepReadonly } from '../types';
 import { v4 as uuidv4 } from 'uuid';
-import { toast } from 'react-hot-toast';
+import { StatePanel } from './StatePanel';
 
 const DataSourceEditor: React.FC<{
-    source: AnyDataSource,
+    source: DeepReadonly<AnyDataSource>,
     onUpdate: (source: AnyDataSource) => void,
-    onDelete: (id: string) => void,
-}> = ({ source, onUpdate, onDelete }) => {
+}> = ({ source, onUpdate }) => {
     
     const renderFields = () => {
-        switch(source.type) {
+        const mutableSource: AnyDataSource = JSON.parse(JSON.stringify(source));
+        switch(mutableSource.type) {
             case 'rest':
                 return (
                     <>
-                        <input type="text" value={source.url} onChange={e => onUpdate({ ...source, url: e.target.value })} placeholder="API URL" className="w-full bg-[var(--color-background)] p-1 rounded" />
-                        <select value={source.method} onChange={e => onUpdate({ ...source, method: e.target.value as RestApiDataSource['method']})} className="w-full bg-[var(--color-background)] p-1 rounded">
+                        <input type="text" value={mutableSource.url} onChange={e => onUpdate({ ...mutableSource, url: e.target.value })} placeholder="API URL" className="w-full bg-[var(--color-background)] p-1 rounded" />
+                        <select value={mutableSource.method} onChange={e => onUpdate({ ...mutableSource, method: e.target.value as RestApiDataSource['method']})} className="w-full bg-[var(--color-background)] p-1 rounded">
                             <option>GET</option><option>POST</option><option>PUT</option><option>DELETE</option>
                         </select>
-                        <select value={source.authType} onChange={e => onUpdate({ ...source, authType: e.target.value as RestApiDataSource['authType']})} className="w-full bg-[var(--color-background)] p-1 rounded">
+                        <select value={mutableSource.authType} onChange={e => onUpdate({ ...mutableSource, authType: e.target.value as RestApiDataSource['authType']})} className="w-full bg-[var(--color-background)] p-1 rounded">
                             <option value="none">No Auth</option><option value="bearer">Bearer Token</option><option value="basic">Basic Auth</option>
                         </select>
-                         {source.authType === 'bearer' && <input type="text" value={source.bearerToken} onChange={e => onUpdate({...source, bearerToken: e.target.value})} placeholder="Bearer Token" className="w-full bg-[var(--color-background)] p-1 rounded"/>}
+                         {mutableSource.authType === 'bearer' && <input type="text" value={mutableSource.bearerToken} onChange={e => onUpdate({...mutableSource, bearerToken: e.target.value})} placeholder="Bearer Token" className="w-full bg-[var(--color-background)] p-1 rounded"/>}
                     </>
                 )
             case 'postgres':
                 return (
                      <>
-                        <input type="text" value={source.host} onChange={e => onUpdate({ ...source, host: e.target.value })} placeholder="Host" className="w-full bg-[var(--color-background)] p-1 rounded" />
-                        <input type="number" value={source.port} onChange={e => onUpdate({ ...source, port: parseInt(e.target.value, 10) })} placeholder="Port" className="w-full bg-[var(--color-background)] p-1 rounded" />
-                        <input type="text" value={source.database} onChange={e => onUpdate({ ...source, database: e.target.value })} placeholder="Database" className="w-full bg-[var(--color-background)] p-1 rounded" />
-                        <input type="text" value={source.user} onChange={e => onUpdate({ ...source, user: e.target.value })} placeholder="User" className="w-full bg-[var(--color-background)] p-1 rounded" />
+                        <input type="text" value={mutableSource.host} onChange={e => onUpdate({ ...mutableSource, host: e.target.value })} placeholder="Host" className="w-full bg-[var(--color-background)] p-1 rounded" />
+                        <input type="number" value={mutableSource.port} onChange={e => onUpdate({ ...mutableSource, port: parseInt(e.target.value, 10) })} placeholder="Port" className="w-full bg-[var(--color-background)] p-1 rounded" />
+                        <input type="text" value={mutableSource.database} onChange={e => onUpdate({ ...mutableSource, database: e.target.value })} placeholder="Database" className="w-full bg-[var(--color-background)] p-1 rounded" />
+                        <input type="text" value={mutableSource.user} onChange={e => onUpdate({ ...mutableSource, user: e.target.value })} placeholder="User" className="w-full bg-[var(--color-background)] p-1 rounded" />
                      </>
                 )
             case 'firestore':
                  return (
-                     <input type="text" value={source.projectId} onChange={e => onUpdate({ ...source, projectId: e.target.value })} placeholder="Project ID" className="w-full bg-[var(--color-background)] p-1 rounded" />
+                     <input type="text" value={mutableSource.projectId} onChange={e => onUpdate({ ...mutableSource, projectId: e.target.value })} placeholder="Project ID" className="w-full bg-[var(--color-background)] p-1 rounded" />
                  )
         }
     }
     
     return (
         <div className="bg-[var(--color-surface-light)] p-3 rounded-b-md space-y-2 text-sm">
-            <input type="text" value={source.name} onChange={e => onUpdate({ ...source, name: e.target.value })} placeholder="Source Name" className="w-full bg-[var(--color-background)] p-1 rounded font-semibold" />
+            <input type="text" value={source.name} onChange={e => onUpdate({ ...(JSON.parse(JSON.stringify(source))), name: e.target.value })} placeholder="Source Name" className="w-full bg-[var(--color-background)] p-1 rounded font-semibold" />
             {renderFields()}
             <button className="w-full text-xs text-center p-1 bg-[var(--color-primary)]/80 hover:bg-[var(--color-primary)] rounded-md">Test Connection</button>
         </div>
     )
 }
 
-export const DataPanel: React.FC = () => {
-    const { state: { dataSources, editingComponentId }, dispatch } = useAppContext();
+const DataSourcesPanel: React.FC = () => {
+    const { state: { dataSources }, dispatch } = useAppContext();
     const [editingSourceId, setEditingSourceId] = useState<string | null>(null);
     const [isAdding, setIsAdding] = useState(false);
 
@@ -82,44 +81,70 @@ export const DataPanel: React.FC = () => {
     };
     
     const ICONS: Record<AnyDataSource['type'], React.ReactNode> = {
-        rest: <Network size={16}/>,
-        postgres: <Database size={16}/>,
-        firestore: <FolderTree size={16}/>
-    }
-
-    if (editingComponentId) {
-        return <div className="p-4 text-center text-sm text-[var(--color-text-tertiary)]"><p>Data management is disabled while editing a component.</p></div>
+        rest: <FaNetworkWired />,
+        postgres: <FaDatabase />,
+        firestore: <FaSitemap />
     }
 
     return (
-        <CollapsibleSection title="Data Sources" defaultOpen>
-            <div className="space-y-3 p-2">
-                {dataSources.map(source => (
-                    <div key={source.id}>
-                        <div className="flex justify-between items-center bg-[var(--color-surface-light)] p-2 rounded-t-md cursor-pointer" onClick={() => setEditingSourceId(editingSourceId === source.id ? null : source.id)}>
-                           <div className="flex items-center gap-2">
-                            <span className="text-[var(--color-primary)]">{ICONS[source.type]}</span>
-                            <span className="font-semibold text-sm">{source.name}</span>
-                           </div>
-                           <button onClick={(e) => { e.stopPropagation(); handleDelete(source.id); }} className="text-gray-400 hover:text-red-500"><Trash2 size={14} /></button>
-                        </div>
-                        {editingSourceId === source.id && <DataSourceEditor source={source as AnyDataSource} onUpdate={handleUpdate} onDelete={handleDelete} />}
+        <div className="space-y-3 p-2">
+            {dataSources.map(source => (
+                <div key={source.id}>
+                    <div className="flex justify-between items-center bg-[var(--color-surface-light)] p-2 rounded-t-md cursor-pointer" onClick={() => setEditingSourceId(editingSourceId === source.id ? null : source.id)}>
+                       <div className="flex items-center gap-2">
+                        <span className="text-[var(--color-primary)]">{ICONS[source.type]}</span>
+                        <span className="font-semibold text-sm">{source.name}</span>
+                       </div>
+                       <button onClick={(e) => { e.stopPropagation(); handleDelete(source.id); }} className="text-gray-400 hover:text-red-500"><FaTrash /></button>
                     </div>
-                ))}
-                {isAdding ? (
-                    <div className="bg-[var(--color-surface-light)] p-3 rounded-md space-y-2 text-center">
-                        <p className="text-sm font-semibold mb-3">Choose data source type:</p>
-                        <button onClick={() => handleAddSource('rest')} className="w-full p-2 bg-[var(--color-background)] hover:bg-[var(--color-border)] rounded-md">REST API</button>
-                        <button onClick={() => handleAddSource('postgres')} className="w-full p-2 bg-[var(--color-background)] hover:bg-[var(--color-border)] rounded-md">PostgreSQL</button>
-                        <button onClick={() => handleAddSource('firestore')} className="w-full p-2 bg-[var(--color-background)] hover:bg-[var(--color-border)] rounded-md">Firestore</button>
-                        <button onClick={() => setIsAdding(false)} className="w-full text-xs text-center p-1 mt-2 hover:underline text-[var(--color-text-tertiary)]">Cancel</button>
-                    </div>
-                ) : (
-                    <button onClick={() => setIsAdding(true)} className="w-full text-xs text-center p-1 bg-[var(--color-surface-light)] hover:bg-[var(--color-border)] rounded-md flex items-center justify-center gap-1">
-                        <Plus /> Add Data Source
+                    {editingSourceId === source.id && <DataSourceEditor source={source} onUpdate={handleUpdate} />}
+                </div>
+            ))}
+            {isAdding ? (
+                <div className="bg-[var(--color-surface-light)] p-3 rounded-md space-y-2 text-center">
+                    <p className="text-sm font-semibold mb-3">Choose data source type:</p>
+                    <button onClick={() => handleAddSource('rest')} className="w-full p-2 bg-[var(--color-background)] hover:bg-[var(--color-border)] rounded-md">REST API</button>
+                    <button onClick={() => handleAddSource('postgres')} className="w-full p-2 bg-[var(--color-background)] hover:bg-[var(--color-border)] rounded-md">PostgreSQL</button>
+                    <button onClick={() => handleAddSource('firestore')} className="w-full p-2 bg-[var(--color-background)] hover:bg-[var(--color-border)] rounded-md">Firestore</button>
+                    <button onClick={() => setIsAdding(false)} className="w-full text-xs text-center p-1 mt-2 hover:underline text-[var(--color-text-tertiary)]">Cancel</button>
+                </div>
+            ) : (
+                <button onClick={() => setIsAdding(true)} className="w-full text-xs text-center p-1 bg-[var(--color-surface-light)] hover:bg-[var(--color-border)] rounded-md flex items-center justify-center gap-1">
+                    <FaPlus /> Add Data Source
+                </button>
+            )}
+        </div>
+    );
+};
+
+export const DataPanel: React.FC = () => {
+    const { state: { pages, activePageId, globalStateDefinition, editingComponentId } } = useAppContext();
+    const [activeTab, setActiveTab] = useState<'sources' | 'pageState' | 'globalState'>('pageState');
+
+    const activePage = pages.find(p => p.id === activePageId);
+    
+    if (editingComponentId) {
+        return <div className="p-4 text-center text-sm text-[var(--color-text-tertiary)]"><p>Data & State management is disabled while editing a component.</p></div>
+    }
+
+    const tabs = [
+        { id: 'sources', label: 'Data Sources', icon: <FaDatabase /> },
+        { id: 'pageState', label: 'Page State', icon: <FaChartBar /> },
+        { id: 'globalState', label: 'Global State', icon: <FaGlobe /> },
+    ];
+
+    return (
+        <div>
+            <div className="flex border-b border-[var(--color-border)]">
+                {tabs.map(tab => (
+                    <button key={tab.id} onClick={() => setActiveTab(tab.id as any)} className={`flex-1 flex items-center justify-center gap-2 py-2 text-xs ${activeTab === tab.id ? 'bg-[var(--color-surface-light)] text-white' : 'text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-light)]'}`}>
+                        {tab.icon} {tab.label}
                     </button>
-                )}
+                ))}
             </div>
-        </CollapsibleSection>
+            {activeTab === 'sources' && <DataSourcesPanel />}
+            {activeTab === 'pageState' && <StatePanel scope="page" variables={activePage?.stateDefinition || []} />}
+            {activeTab === 'globalState' && <StatePanel scope="global" variables={globalStateDefinition} />}
+        </div>
     );
 };

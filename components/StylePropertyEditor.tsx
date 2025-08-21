@@ -1,8 +1,7 @@
 import React, { useState, ReactNode, useEffect } from 'react';
 import { Style, Element, Viewport, ThemeToken, DeepReadonly, CustomComponent, WebStyle } from '../types';
 import { useAppContext } from '../context/AppContext';
-import { ChevronDown, X } from 'lucide-react';
-import { AlignCenter, AlignEndHorizontal, AlignStartHorizontal, ArrowDown, ArrowLeft, ArrowRight, ArrowUp, Laptop, Smartphone, Tablet, Sparkles } from 'lucide-react';
+import { FaChevronDown, FaLaptop, FaMobile, FaTabletScreenButton, FaWandMagicSparkles } from 'react-icons/fa6';
 import { toast } from 'react-hot-toast';
 import { generateResponsiveStylesFromDesktop } from '../lib/ai';
 import { ColorPicker } from './ColorPicker';
@@ -82,7 +81,7 @@ export const CollapsibleSection: React.FC<{ title: string; children: ReactNode; 
         <div>
             <button onClick={() => setIsOpen(!isOpen)} className="flex items-center justify-between w-full p-2 my-2 text-sm font-semibold text-left bg-[var(--color-surface-light)] rounded-md">
                 <span>{title}</span>
-                <ChevronDown size={16} className={`transition-transform ${isOpen ? 'rotate-0' : '-rotate-90'}`} />
+                <FaChevronDown size={16} className={`transition-transform ${isOpen ? 'rotate-0' : '-rotate-90'}`} />
             </button>
             {isOpen && <div className="space-y-3">{children}</div>}
         </div>
@@ -143,15 +142,15 @@ export const StylePropertyEditor: React.FC<StylePropertyEditorProps> = ({ elemen
                     <div className="flex bg-[var(--color-surface-light)] p-1 rounded-lg">
                         {(['desktop', 'tablet', 'mobile'] as Viewport[]).map(vp => (
                             <button key={vp} onClick={() => dispatch({type: 'SET_VIEWPORT', payload: vp})} className={`px-3 py-1 text-sm rounded-md flex items-center gap-1.5 ${viewport === vp ? 'bg-[var(--color-primary)] text-white' : 'hover:bg-[var(--color-border)]'}`}>
-                                {vp === 'desktop' && <Laptop size={14}/>}
-                                {vp === 'tablet' && <Tablet size={14}/>}
-                                {vp === 'mobile' && <Smartphone size={14}/>}
+                                {vp === 'desktop' && <FaLaptop size={14}/>}
+                                {vp === 'tablet' && <FaTabletScreenButton size={14}/>}
+                                {vp === 'mobile' && <FaMobile size={14}/>}
                                 <span className="capitalize">{vp}</span>
                             </button>
                         ))}
                     </div>
                     <button onClick={handleAiResponsive} disabled={isLoadingResponsive} className="p-2 text-[var(--color-primary)] hover:bg-[var(--color-surface-light)] rounded-md text-xs flex items-center gap-1 disabled:opacity-50">
-                        <Sparkles size={14}/> {isLoadingResponsive ? 'Generating...' : 'Auto-Responsive'}
+                        <FaWandMagicSparkles size={14}/> {isLoadingResponsive ? 'Generating...' : 'Auto-Responsive'}
                     </button>
                 </div>
             )}

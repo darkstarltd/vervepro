@@ -1,7 +1,3 @@
-
-
-
-
 import { Element, Page, Style, ProjectType, NativeStyle, FlutterStyle, KotlinStyle, CustomComponent, ResponsiveStyles, ThemeState, ApiDataSource, ElementAnimation, DeepReadonly, StateVariable, MockApiEndpoint, LogicFlow } from '../types';
 import { mergeElements } from './treeUtils';
 
@@ -733,6 +729,22 @@ function generateComposable(element: DeepReadonly<Element>, customComponents: re
             return `${indent}Button(onClick = { /* TODO */ }) {\n${buttonChild}\n${indent}}`;
         case 'Image':
             return `${indent}// Image composable for source: ${props?.src}\n${indent}// implementation would use a library like Coil:\n${indent}// AsyncImage(model = "${props?.src}", contentDescription = null)`;
+        case 'Card': {
+            const cardChildren = children?.map(c => generateComposable(c, customComponents, indentLevel + 1)).join('\n') || '';
+            return `${indent}Card(modifier = Modifier.padding(16.dp)) {\n${cardChildren}\n${indent}}`;
+        }
+        case 'FloatingActionButton': {
+            const fabChild = children?.[0] ? generateComposable(children[0], customComponents, indentLevel + 1) : `${indent}  // Add an Icon here, e.g., Icon(Icons.Default.Add, contentDescription = "Add")`;
+            return `${indent}FloatingActionButton(onClick = { /* TODO */ }) {\n${fabChild}\n${indent}}`;
+        }
+        case 'Chip':
+             return `${indent}Chip(onClick = { /* TODO */ }) {\n${indent}  Text(text = "${content}")\n${indent}}`;
+        case 'LottieAnimation':
+            return `${indent}// Add Lottie dependency: implementation("com.airbnb.android:lottie-compose:...")\n${indent}// val composition by rememberLottieComposition(LottieCompositionSpec.Url("${props?.src}"))\n${indent}// LottieAnimation(composition = composition, iterations = LottieConstants.IterateForever)`;
+        case 'ShimmerLayout': {
+            const shimmerChildren = children?.map(c => generateComposable(c, customComponents, indentLevel + 1)).join('\n') || '';
+            return `${indent}// Add Shimmer dependency, e.g., from com.facebook.shimmer\n${indent}// Wrap with a shimmer modifier\n${indent}Column {\n${shimmerChildren}\n${indent}}`;
+        }
         default:
             return `${indent}// Unsupported type: ${type}`;
     }
@@ -748,6 +760,13 @@ export function generateKotlinFiles(pages: readonly DeepReadonly<Page>[], custom
 import androidx.compose.material.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
+
+// Add necessary dependencies to your build.gradle.kts file:
+// - implementation("androidx.compose.material:material:...")
+// - For images: implementation("io.coil-kt:coil-compose:...")
+// - For Lottie: implementation("com.airbnb.android:lottie-compose:...")
 
 @Composable
 fun App() {
@@ -758,8 +777,10 @@ fun App() {
 
 @Composable
 fun MainScreen() {
-    Column {
+    Surface(modifier = Modifier.fillMaxSize()) {
+        Column {
 ${bodyComposables}
+        }
     }
 }
 `;

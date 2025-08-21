@@ -3,7 +3,7 @@ import { CustomComponent, DeepReadonly } from '../types';
 import { ComponentSlotEditor } from './ComponentSlotEditor';
 import { ComponentPropEditor } from './ComponentPropEditor';
 import { ComponentVariantEditor } from './ComponentVariantEditor';
-import { FileJson, SlidersHorizontal, BoxSelect } from 'lucide-react';
+import { FaFileLines, FaSliders, FaBox } from 'react-icons/fa6';
 
 type EditorTab = 'props' | 'slots' | 'variants' | 'state';
 
@@ -13,9 +13,9 @@ export const ComponentEditorPanel: React.FC<{
     const [activeTab, setActiveTab] = useState<EditorTab>('variants');
     
     const tabs: {id: EditorTab, label: string, icon: React.ReactNode}[] = [
-        { id: 'props', label: 'Props', icon: <FileJson size={16}/> },
-        { id: 'variants', label: 'Variants', icon: <SlidersHorizontal size={16}/> },
-        { id: 'slots', label: 'Slots', icon: <BoxSelect size={16}/> },
+        { id: 'props', label: 'Props', icon: <FaFileLines size={16}/> },
+        { id: 'variants', label: 'Variants', icon: <FaSliders size={16}/> },
+        { id: 'slots', label: 'Slots', icon: <FaBox size={16}/> },
         // { id: 'state', label: 'State' },
     ];
     

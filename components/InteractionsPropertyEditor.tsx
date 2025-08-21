@@ -1,9 +1,8 @@
-
 import React from 'react';
 import { Element, ActionStep, ActionType, DeepReadonly } from '../types';
 import { CollapsibleSection } from './StylePropertyEditor';
 import { useAppContext } from '../context/AppContext';
-import { Plus, Trash2, Sparkles } from 'lucide-react';
+import { FaPlus, FaTrash, FaWandMagicSparkles } from 'react-icons/fa6';
 
 interface InteractionsPropertyEditorProps {
   element: Element;
@@ -29,6 +28,7 @@ export const InteractionsPropertyEditor: React.FC<InteractionsPropertyEditorProp
     const activePage = pages.find(p => p.id === activePageId);
     const stateVariables = activePage?.stateDefinition || [];
     const apiSources = activePage?.apiDataSources || [];
+    const logicFlows = activePage?.logicFlows || [];
     const modals = activePage ? findModalsRecursive(activePage.elements as readonly Element[]) : [];
     const interactions = element.interactions || [];
 
@@ -118,6 +118,17 @@ export const InteractionsPropertyEditor: React.FC<InteractionsPropertyEditorProp
                         {modals.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
                     </select>
                 );
+            case 'trigger_flow':
+                return (
+                    <select
+                        value={action.payload.flowId || ''}
+                        onChange={(e) => handleUpdatePayload(index, { flowId: e.target.value })}
+                        className="bg-[var(--color-background)] p-1 rounded text-xs mt-2 w-full"
+                    >
+                        <option value="">Select Flow</option>
+                        {logicFlows.map(f => <option key={f.id} value={f.id}>{f.name}</option>)}
+                    </select>
+                );
             default:
                 return null;
         }
@@ -130,7 +141,7 @@ export const InteractionsPropertyEditor: React.FC<InteractionsPropertyEditorProp
                     onClick={onAiInteraction}
                     className="w-full text-xs text-center p-2 bg-[var(--color-primary)]/20 hover:bg-[var(--color-primary)]/30 text-[var(--color-primary)] rounded-md flex items-center justify-center gap-2"
                 >
-                    <Sparkles size={14} /> AI Generate
+                    <FaWandMagicSparkles /> AI Generate
                 </button>
                 {interactions.map((action, index) => (
                     <div key={index} className="bg-[var(--color-surface-light)] p-2 rounded-md">
@@ -143,6 +154,9 @@ export const InteractionsPropertyEditor: React.FC<InteractionsPropertyEditorProp
                                 <optgroup label="Navigation">
                                     <option value="navigate_to_page">Navigate to Page</option>
                                     <option value="open_url">Open URL</option>
+                                </optgroup>
+                                <optgroup label="Logic">
+                                    <option value="trigger_flow">Trigger Flow</option>
                                 </optgroup>
                                 <optgroup label="State Management">
                                     <option value="set_state">Set State</option>
@@ -159,7 +173,7 @@ export const InteractionsPropertyEditor: React.FC<InteractionsPropertyEditorProp
                                     <option value="toggle_modal">Toggle Modal</option>
                                 </optgroup>
                             </select>
-                            <button onClick={() => handleDeleteAction(index)} className="text-gray-400 hover:text-red-500"><Trash2 size={14} /></button>
+                            <button onClick={() => handleDeleteAction(index)} className="text-gray-400 hover:text-red-500"><FaTrash /></button>
                         </div>
                         {renderPayloadEditor(action, index)}
                     </div>
@@ -168,7 +182,7 @@ export const InteractionsPropertyEditor: React.FC<InteractionsPropertyEditorProp
                     onClick={handleAddAction}
                     className="w-full text-xs text-center p-1 bg-[var(--color-surface-light)] hover:bg-[var(--color-border)] rounded-md flex items-center justify-center gap-1"
                 >
-                    <Plus /> Add Action
+                    <FaPlus /> Add Action
                 </button>
             </div>
         </CollapsibleSection>

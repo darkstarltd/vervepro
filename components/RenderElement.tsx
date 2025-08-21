@@ -4,9 +4,9 @@ import { useSortable } from '@dnd-kit/sortable';
 import { useDroppable } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
-import { Element, Style, NativeStyle, FlutterStyle, KotlinStyle, ElementAnimation, DeepReadonly, WebStyle } from '../types';
+import { Element, Style, NativeStyle, FlutterStyle, KotlinStyle, ElementAnimation, DeepReadonly, WebStyle, ActionStep } from '../types';
 import { useAppContext } from '../context/AppContext';
-import { GripVertical, Copy, Trash2, Lock, EyeOff } from 'lucide-react';
+import { FaGripVertical, FaCopy, FaTrash, FaLock, FaEyeSlash } from 'react-icons/fa6';
 import { mergeElements } from '../lib/treeUtils';
 import { Icon } from './Icon';
 import { toast } from 'react-hot-toast';
@@ -43,10 +43,10 @@ const ElementChrome: React.FC<{ element: DeepReadonly<Element>; listeners: any; 
   return (
     <div className="element-chrome">
       <div className="element-chrome-toolbar">
-        <span {...listeners} className="element-chrome-drag-handle flex items-center gap-1"><GripVertical size={12}/>{element.name}</span>
+        <span {...listeners} className="element-chrome-drag-handle flex items-center gap-1"><FaGripVertical />{element.name}</span>
         <div className="element-chrome-actions">
-          <button onClick={(e) => { e.stopPropagation(); dispatch({ type: 'DUPLICATE_ELEMENT', payload: { elementId: element.id } }) }} title="Duplicate"><Copy size={14} /></button>
-          <button onClick={(e) => { e.stopPropagation(); dispatch({ type: 'DELETE_ELEMENT', payload: { elementId: element.id } }) }} className="hover:text-[var(--color-danger-hover)]" title="Delete"><Trash2 size={14} /></button>
+          <button onClick={(e) => { e.stopPropagation(); dispatch({ type: 'DUPLICATE_ELEMENT', payload: { elementId: element.id } }) }} title="Duplicate"><FaCopy /></button>
+          <button onClick={(e) => { e.stopPropagation(); dispatch({ type: 'DELETE_ELEMENT', payload: { elementId: element.id } }) }} className="hover:text-[var(--color-danger-hover)]" title="Delete"><FaTrash /></button>
         </div>
       </div>
     </div>
@@ -90,7 +90,7 @@ type RenderElementProps = {
 
 const RenderElementComponent: React.FC<RenderElementProps> = ({ element: instanceElement, isSelected, onContextMenu, isDragOverlay = false, dropIndicator, dataScope = {}, mode }) => {
   
-  const { state, dispatch, setSelectedElementId, updateElement } = useAppContext();
+  const { state, dispatch, setSelectedElementId, updateElement, executeFlow } = useAppContext();
   const { pages, activePageId, selectedElementId, visibleModalIds, projectType, customComponents, viewport, runtimeState, codeSnippets, altKeyPressed, editingComponentId } = state;
   const [isEditing, setIsEditing] = useState(false);
   const elementRef = useRef<HTMLDivElement>(null);
@@ -187,28 +187,35 @@ const RenderElementComponent: React.FC<RenderElementProps> = ({ element: instanc
     if (isLocked && mode === 'edit') { toast('Element is locked'); return; }
     
     if (interactions?.length && !isEditing && !isDragOverlay) {
-      e.preventDefault();
-      for (const action of interactions) {
-        if (action.type === 'call_api') {
-          const apiSource = activePage?.apiDataSources.find(ds => ds.id === action.payload.apiSourceId);
-          if (apiSource) {
-            const toastId = toast.loading(`Calling API: ${apiSource.name}...`);
-            try {
-              const headers = apiSource.headers.reduce((acc, h) => ({...acc, [h.key]: h.value }), {});
-              const response = await fetch(apiSource.url, { method: apiSource.method, headers });
-              if (!response.ok) throw new Error(`API call failed with status ${response.status}`);
-              const data = await response.json();
-              dispatch({ type: 'SET_PAGE_DATA_STATE', payload: { sourceName: apiSource.name, data } });
-              toast.success(`API call to ${apiSource.name} successful!`, { id: toastId });
-            } catch (error) {
-              console.error(error);
-              toast.error(error instanceof Error ? error.message : `API call to ${apiSource.name} failed.`, { id: toastId });
+        e.preventDefault();
+        for (const action of interactions as ActionStep[]) {
+            if (action.type === 'trigger_flow' && action.payload.flowId) {
+                await executeFlow(action.payload.flowId);
+            } else if (action.type === 'call_api') {
+                const apiSource = activePage?.apiDataSources.find(ds => ds.id === action.payload.apiSourceId);
+                if (apiSource) {
+                    const toastId = toast.loading(`Calling API: ${apiSource.name}...`);
+                    try {
+                        const headers = apiSource.headers.reduce((acc, h) => ({...acc, [h.key]: h.value }), {});
+                        const response = await fetch(apiSource.url, { method: apiSource.method, headers });
+                        if (!response.ok) throw new Error(`API call failed with status ${response.status}`);
+                        const data = await response.json();
+                        dispatch({ type: 'SET_PAGE_DATA_STATE', payload: { sourceName: apiSource.name, data } });
+                        toast.success(`API call to ${apiSource.name} successful!`, { id: toastId });
+                    } catch (error) {
+                        console.error(error);
+                        toast.error(error instanceof Error ? error.message : `API call to ${apiSource.name} failed.`, { id: toastId });
+                    }
+                }
+            } else {
+                dispatch({ type: 'EXECUTE_ACTIONS', payload: { actions: [action] } });
             }
-          }
-        } else dispatch({ type: 'EXECUTE_ACTIONS', payload: { actions: [action] } });
-      }
-    } else if (mode === 'edit' && !isEditing) setSelectedElementId(instanceElement.id);
-  };
+        }
+    } else if (mode === 'edit' && !isEditing) {
+        setSelectedElementId(instanceElement.id);
+    }
+};
+
   
   const handleDoubleClick = (e: React.MouseEvent) => {
     if (isLocked) return;
@@ -274,7 +281,7 @@ const RenderElementComponent: React.FC<RenderElementProps> = ({ element: instanc
   
   if (!isVisible && !isDragOverlay) return null;
   if (isHidden && mode === 'edit' && !isDragOverlay) {
-    return ( <div onClick={handleInteraction} className="hidden-element-placeholder"> <EyeOff size={16}/> <span>{element.name} (Hidden)</span> </div> );
+    return ( <div onClick={handleInteraction} className="hidden-element-placeholder"> <FaEyeSlash /> <span>{element.name} (Hidden)</span> </div> );
   }
   if (type === 'slot' && editingComponentId && !isDragOverlay) {
     return (
@@ -344,7 +351,7 @@ const RenderElementComponent: React.FC<RenderElementProps> = ({ element: instanc
     <div ref={setNodeRef} style={style} className="relative" onMouseEnter={() => { if (mode === 'edit' && altKeyPressed) dispatch({ type: 'SET_HOVERED_ELEMENT_ID', payload: instanceElement.id }); }} onMouseLeave={() => { if (mode === 'edit' && altKeyPressed) dispatch({ type: 'SET_HOVERED_ELEMENT_ID', payload: null }); }} >
       {mode === 'edit' && isSelected && !isDragOverlay && <ElementChrome element={element} listeners={listeners}/>}
       {mode === 'edit' && !isSelected && !isDragOverlay && <div className="element-hover-outline" />}
-      {mode === 'edit' && isLocked && !isDragOverlay && ( <div className="absolute inset-0 bg-black/30 backdrop-blur-sm z-20 flex items-center justify-center text-white rounded-[inherit]"> <Lock size={24} /> </div> )}
+      {mode === 'edit' && isLocked && !isDragOverlay && ( <div className="absolute inset-0 bg-black/30 backdrop-blur-sm z-20 flex items-center justify-center text-white rounded-[inherit]"> <FaLock size={24} /> </div> )}
       <div ref={isContainer ? droppableNodeRef : null} className={`outline-none transition-all duration-200 ${mode === 'edit' && isContainer && isOver && !isDragOverlay ? 'bg-black/10' : ''}`} style={{ borderRadius: computedStyle.borderRadius }}>
         <div ref={elementRef}>
             <Tag {...elementProps}>{renderSpecialContent()}</Tag>

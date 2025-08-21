@@ -1,11 +1,11 @@
 import { Template } from '../types';
 import React from 'react';
-import { LayoutDashboard, Presentation, User, ShoppingCart, MessageSquare, ChevronsUpDown } from 'lucide-react';
+import { FaUser, FaCartShopping, FaComment, FaArrowsUpDown, FaGaugeHigh, FaPager } from 'react-icons/fa6';
 
 export const TEMPLATES: Template[] = [
     {
         name: 'User Profile Card',
-        icon: React.createElement(User),
+        icon: React.createElement(FaUser),
         category: 'Cards',
         elements: [{
             type: 'card', name: 'Profile Card', styles: { desktop: { width: '320px', textAlign: 'center' } },
@@ -20,7 +20,7 @@ export const TEMPLATES: Template[] = [
     },
     {
         name: 'Contact Form',
-        icon: React.createElement(MessageSquare),
+        icon: React.createElement(FaComment),
         category: 'Forms',
         elements: [{
             type: 'form', name: 'Contact Form', styles: { desktop: { maxWidth: '500px', margin: '0 auto', padding: '24px', backgroundColor: 'var(--color-surface)', borderRadius: '12px' } },
@@ -47,17 +47,22 @@ export const TEMPLATES: Template[] = [
         }]
     },
     {
-        name: 'Accordion',
-        icon: React.createElement(ChevronsUpDown),
+        name: 'FAQ Section',
+        icon: React.createElement(FaArrowsUpDown),
         category: 'Components',
-        elements: [
-            { type: 'accordion', name: 'Accordion 1', styles: { desktop: {} } },
-            { type: 'accordion', name: 'Accordion 2', styles: { desktop: {} } },
-        ]
+        elements: [{
+            type: 'container', name: 'FAQ Container', styles: { desktop: { maxWidth: '800px', margin: '0 auto' } },
+            children: [
+                { type: 'heading', name: 'FAQ Title', content: 'Frequently Asked Questions', styles: { desktop: { textAlign: 'center', marginBottom: '32px' } } },
+                { type: 'accordion', name: 'Accordion 1', styles: { desktop: {} } },
+                { type: 'accordion', name: 'Accordion 2', styles: { desktop: {} } },
+                { type: 'accordion', name: 'Accordion 3', styles: { desktop: {} } }
+            ]
+        }]
     },
     {
         name: 'E-commerce Product Grid',
-        icon: React.createElement(ShoppingCart),
+        icon: React.createElement(FaCartShopping),
         category: 'Grids',
         elements: [{
             type: 'grid', name: 'Product Grid', styles: { desktop: { gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: '24px' } },
@@ -80,7 +85,7 @@ export const TEMPLATES: Template[] = [
     },
     {
         name: 'Landing Page',
-        icon: React.createElement(Presentation),
+        icon: React.createElement(FaPager),
         category: 'Full Pages',
         elements: [
             {
@@ -130,7 +135,7 @@ export const TEMPLATES: Template[] = [
     },
     {
         name: 'Dashboard UI',
-        icon: React.createElement(LayoutDashboard),
+        icon: React.createElement(FaGaugeHigh),
         category: 'Full Pages',
         elements: [
             {

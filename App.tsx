@@ -25,6 +25,8 @@ import { createDefaultElement } from './constants';
 import { findElementDeep } from './lib/treeUtils';
 import { v4 as uuidv4 } from 'uuid';
 import { DevTools } from './components/DevTools';
+import { PublishModal } from './components/PublishModal';
+import { WhatsNewModal } from './components/WhatsNewModal';
 
 function AppContent() {
   const { state, dispatch, undo, redo, canUndo, canRedo, setSelectedElementId, updateElement } = useAppContext();
@@ -32,6 +34,44 @@ function AppContent() {
 
   const [activeModal, setActiveModal] = useState<string | null>(null);
   const [modalContext, setModalContext] = useState<any>(null);
+
+  // --- "What's New" Modal Logic ---
+  useEffect(() => {
+    const LATEST_UPDATE_VERSION = '2.0';
+    const lastSeenVersion = localStorage.getItem('proverve-last-seen-version');
+    if (lastSeenVersion !== LATEST_UPDATE_VERSION) {
+      setActiveModal('whatsNew');
+      localStorage.setItem('proverve-last-seen-version', LATEST_UPDATE_VERSION);
+    }
+  }, []);
+  
+  // --- Multiplayer Cursors Simulation ---
+  useEffect(() => {
+    const cursorNames = ["Alex", "Jordan", "Taylor", "Casey"];
+    const colors = ["#F44336", "#2196F3", "#4CAF50", "#FFC107"];
+
+    if (state.multiplayerCursors.length === 0) {
+      const initialCursors = cursorNames.map((name, i) => ({
+        id: uuidv4(), name, color: colors[i],
+        x: Math.random() * window.innerWidth * 0.7, // Start within canvas-ish area
+        y: Math.random() * window.innerHeight * 0.7
+      }));
+      dispatch({ type: 'UPDATE_CURSORS', payload: initialCursors });
+    }
+
+    const moveCursors = () => {
+      const newCursors = state.multiplayerCursors.map(c => ({
+        ...c,
+        x: c.x + (Math.random() - 0.5) * 20,
+        y: c.y + (Math.random() - 0.5) * 20,
+      }));
+      dispatch({ type: 'UPDATE_CURSORS', payload: newCursors });
+    };
+    
+    const intervalId = setInterval(moveCursors, 2000);
+    return () => clearInterval(intervalId);
+  }, [dispatch, state.multiplayerCursors]);
+
 
   const openModal = (modalName: string, context: any = null) => {
     setActiveModal(modalName);
@@ -142,6 +182,8 @@ function AppContent() {
       case 'share': return <ShareModal onClose={closeModal} />;
       case 'settings': return <SettingsModal onClose={closeModal} />;
       case 'export': return <CodeExportModal onClose={closeModal} />;
+      case 'publish': return <PublishModal onClose={closeModal} />;
+      case 'whatsNew': return <WhatsNewModal onClose={closeModal} />;
       case 'aiGenerate': return <AiGenerateModal onClose={closeModal} onGenerate={handleAiGeneration} />;
       case 'aiRefine': return <AiRefineModal onClose={closeModal} onGenerate={handleAiRefinement} />;
       case 'aiInteraction': return <AiInteractionModal onClose={closeModal} onGenerate={handleAiInteractionGeneration} />;
@@ -162,6 +204,7 @@ function AppContent() {
         appMode={appMode}
         onModeChange={(mode) => dispatch({ type: 'SET_APP_MODE', payload: mode })}
         onShareClick={() => openModal('share')}
+        onPublishClick={() => openModal('publish')}
         onSettingsClick={() => openModal('settings')}
       />
       <main className="flex-1 overflow-hidden">

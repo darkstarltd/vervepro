@@ -3,7 +3,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useAppContext } from '../context/AppContext';
 import { Element, ProjectType, DeepReadonly } from '../types';
 import { componentLibrary } from '../constants';
-import { ChevronDown, Lock, Unlock, Eye, EyeOff } from 'lucide-react';
+import { FaChevronDown, FaLock, FaUnlock, FaEye, FaEyeSlash } from 'react-icons/fa6';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
@@ -67,10 +67,10 @@ const SortableTreeItem: React.FC<{
                 } ${element.isHidden ? 'opacity-50' : ''}`}
                 style={{ paddingLeft: `${level * 16 + 4}px` }}
             >
-                <span {...listeners} className="cursor-grab touch-none p-1 mr-1"><ChevronDown size={12}/></span>
+                <span {...listeners} className="cursor-grab touch-none p-1 mr-1"><FaChevronDown size={12}/></span>
                 {hasChildren ? (
                     <button onClick={(e) => { e.stopPropagation(); onToggleExpand(element.id); }} className="p-0.5 rounded hover:bg-white/10">
-                        <ChevronDown size={12} className={`transition-transform ${isExpanded ? 'rotate-0' : '-rotate-90'}`} />
+                        <FaChevronDown size={12} className={`transition-transform ${isExpanded ? 'rotate-0' : '-rotate-90'}`} />
                     </button>
                 ) : (
                     <span className="w-4"></span>
@@ -78,8 +78,8 @@ const SortableTreeItem: React.FC<{
                 <span className="w-5 h-5 flex items-center justify-center mr-2 text-[var(--color-text-secondary)]">{getElementIcon(element, projectType)}</span>
                 <span className="text-sm truncate flex-1">{element.name}</span>
                 <div className="hidden group-hover:flex items-center gap-1 pr-1">
-                    <button onClick={toggleLocked} title={element.isLocked ? 'Unlock' : 'Lock'}>{element.isLocked ? <Lock size={14}/> : <Unlock size={14}/>}</button>
-                    <button onClick={toggleHidden} title={element.isHidden ? 'Show' : 'Hide'}>{element.isHidden ? <EyeOff size={14}/> : <Eye size={14}/>}</button>
+                    <button onClick={toggleLocked} title={element.isLocked ? 'Unlock' : 'Lock'}>{element.isLocked ? <FaLock size={14}/> : <FaUnlock size={14}/>}</button>
+                    <button onClick={toggleHidden} title={element.isHidden ? 'Show' : 'Hide'}>{element.isHidden ? <FaEyeSlash size={14}/> : <FaEye size={14}/>}</button>
                 </div>
             </div>
             {hasChildren && isExpanded && (

@@ -1,7 +1,6 @@
-
 import React from 'react';
 import { useAppContext } from '../context/AppContext';
-import { ArrowUp, ArrowDown } from 'lucide-react';
+import { FaArrowUp, FaArrowDown } from 'react-icons/fa6';
 import { toast } from 'react-hot-toast';
 
 export const ContextMenu: React.FC<{
@@ -27,8 +26,8 @@ export const ContextMenu: React.FC<{
       <div className="p-1 min-w-[180px]">
         <button onClick={() => handleAction(() => dispatch({ type: 'WRAP_ELEMENT', payload: { elementId, wrapperType: 'container' } }))} className="w-full text-left px-3 py-2 hover:bg-[var(--color-primary)] rounded">Wrap in Container</button>
         <div className="h-px bg-[var(--color-border)] my-1"></div>
-        <button onClick={() => handleAction(() => dispatch({ type: 'ADJUST_Z_INDEX', payload: { elementId, direction: 'forward' } }))} className="w-full text-left px-3 py-2 hover:bg-[var(--color-primary)] rounded flex items-center gap-2"><ArrowUp size={16}/> Bring Forward</button>
-        <button onClick={() => handleAction(() => dispatch({ type: 'ADJUST_Z_INDEX', payload: { elementId, direction: 'backward' } }))} className="w-full text-left px-3 py-2 hover:bg-[var(--color-primary)] rounded flex items-center gap-2"><ArrowDown size={16}/> Send Backward</button>
+        <button onClick={() => handleAction(() => dispatch({ type: 'ADJUST_Z_INDEX', payload: { elementId, direction: 'forward' } }))} className="w-full text-left px-3 py-2 hover:bg-[var(--color-primary)] rounded flex items-center gap-2"><FaArrowUp /> Bring Forward</button>
+        <button onClick={() => handleAction(() => dispatch({ type: 'ADJUST_Z_INDEX', payload: { elementId, direction: 'backward' } }))} className="w-full text-left px-3 py-2 hover:bg-[var(--color-primary)] rounded flex items-center gap-2"><FaArrowDown /> Send Backward</button>
         <div className="h-px bg-[var(--color-border)] my-1"></div>
         <button onClick={() => handleAction(() => {
             dispatch({ type: 'COPY_STYLES', payload: { elementId } });

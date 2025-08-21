@@ -4,7 +4,7 @@ import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { RenderElement } from './RenderElement';
 import { useAppContext } from '../context/AppContext';
 import { Element, DeepReadonly, MultiplayerCursor } from '../types';
-import { MousePointer, X, Smartphone, Tablet, Monitor, RotateCcw } from 'lucide-react';
+import { FaHandPointer, FaTimes, FaMobileAlt, FaTabletAlt, FaDesktop, FaRedo } from 'react-icons/fa';
 import { MultiplayerCursors } from './MultiplayerCursors';
 
 interface CanvasProps {
@@ -51,7 +51,7 @@ const CanvasContent: React.FC<Omit<CanvasProps, 'cursors'>> = ({ elements, dropI
             <div className="flex flex-col items-center justify-center h-full border-2 border-dashed border-gray-700 rounded-lg">
                {isRootDropTarget && <DropIndicator />}
                <div className="text-center text-gray-500">
-                <MousePointer />
+                <FaHandPointer />
                 <h3 className="font-bold text-lg mt-4">Your Canvas is Empty</h3>
                 <p className="text-sm">Drag components from the left panel to start building.</p>
                </div>
@@ -92,10 +92,10 @@ const DevicePreviewControls: React.FC<{
 }> = ({ device, setDevice, orientation, setOrientation }) => {
     return (
         <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-full bg-[var(--color-surface)] p-1 rounded-t-lg border-b-0 border border-[var(--color-border)] flex items-center gap-2">
-            <button onClick={() => setDevice('iphone-14-pro')} className={`px-2 py-1 text-xs rounded ${device === 'iphone-14-pro' ? 'bg-[var(--color-primary)]' : 'hover:bg-[var(--color-border)]'}`}><Smartphone size={14}/></button>
-            <button onClick={() => setDevice('pixel-7')} className={`px-2 py-1 text-xs rounded ${device === 'pixel-7' ? 'bg-[var(--color-primary)]' : 'hover:bg-[var(--color-border)]'}`}><Smartphone size={14}/></button>
+            <button onClick={() => setDevice('iphone-14-pro')} className={`px-2 py-1 text-xs rounded ${device === 'iphone-14-pro' ? 'bg-[var(--color-primary)]' : 'hover:bg-[var(--color-border)]'}`}><FaMobileAlt /></button>
+            <button onClick={() => setDevice('pixel-7')} className={`px-2 py-1 text-xs rounded ${device === 'pixel-7' ? 'bg-[var(--color-primary)]' : 'hover:bg-[var(--color-border)]'}`}><FaMobileAlt /></button>
             <div className="w-px h-4 bg-[var(--color-border)] mx-1" />
-            <button onClick={() => setOrientation(o => o === 'portrait' ? 'landscape' : 'portrait')} className="p-1.5 hover:bg-[var(--color-border)] rounded"><RotateCcw size={14}/></button>
+            <button onClick={() => setOrientation(o => o === 'portrait' ? 'landscape' : 'portrait')} className="p-1.5 hover:bg-[var(--color-border)] rounded"><FaRedo /></button>
         </div>
     );
 };
@@ -196,7 +196,7 @@ export const Canvas: React.FC<CanvasProps> = ({ elements, dropIndicator, onConte
                         onClick={() => dispatch({ type: 'SET_EDITING_COMPONENT_ID', payload: null })}
                         className="flex items-center gap-1 text-xs px-2 py-1 bg-[var(--color-surface-light)] hover:bg-[var(--color-border)] rounded-md"
                     >
-                       <X size={12}/> Return to Page
+                       <FaTimes /> Return to Page
                     </button>
                 </div>
               )}

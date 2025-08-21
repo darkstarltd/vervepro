@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useAppContext } from '../context/AppContext';
-import { Plus, Copy, Trash2 } from 'lucide-react';
+import { FaPlus, FaCopy, FaTrash } from 'react-icons/fa6';
 
 export const PagesPanel: React.FC = () => {
     const { state: { pages, activePageId, editingComponentId }, dispatch } = useAppContext();
@@ -78,7 +78,7 @@ export const PagesPanel: React.FC = () => {
                 onClick={handleAddPage}
                 className="w-full mb-2 px-2 py-1.5 bg-[var(--color-surface-light)] hover:bg-[var(--color-border)] text-sm font-medium rounded-md flex items-center justify-center gap-2"
             >
-                <Plus size={14} /> Add New Page
+                <FaPlus size={14} /> Add New Page
             </button>
             {pages.map(page => (
                 <div
@@ -107,8 +107,8 @@ export const PagesPanel: React.FC = () => {
 
                     {editingPageId !== page.id && (
                         <div className="hidden group-hover:flex items-center gap-1">
-                            <button onClick={(e) => handleDuplicatePage(e, page.id)} title="Duplicate Page" className="p-1 hover:bg-white/10 rounded"><Copy size={14} /></button>
-                            <button onClick={(e) => handleDeletePage(e, page.id)} title="Delete Page" className="p-1 hover:bg-white/10 rounded text-gray-400 hover:text-red-400"><Trash2 size={14} /></button>
+                            <button onClick={(e) => handleDuplicatePage(e, page.id)} title="Duplicate Page" className="p-1 hover:bg-white/10 rounded"><FaCopy size={14} /></button>
+                            <button onClick={(e) => handleDeletePage(e, page.id)} title="Delete Page" className="p-1 hover:bg-white/10 rounded text-gray-400 hover:text-red-400"><FaTrash size={14} /></button>
                         </div>
                     )}
                 </div>

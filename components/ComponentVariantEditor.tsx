@@ -1,8 +1,7 @@
-
 import React, { useState, useMemo } from 'react';
 import { CustomComponent, DeepReadonly, VariantPropertyGroup, VariantOption, Style, ResponsiveStyles } from '../types';
 import { useAppContext } from '../context/AppContext';
-import { Plus, Trash2 } from 'lucide-react';
+import { FaPlus, FaTrash } from 'react-icons/fa6';
 import { v4 as uuidv4 } from 'uuid';
 import { StylePropertyEditor } from './StylePropertyEditor';
 
@@ -52,7 +51,7 @@ const VariantPropertyManager: React.FC<{
                             onChange={e => handleUpdateProperty(prop.id, e.target.value)}
                             className="flex-1 w-full bg-[var(--color-background)] p-2 rounded text-sm font-semibold"
                         />
-                        <button onClick={() => handleDeleteProperty(prop.id)} className="p-1 text-gray-400 hover:text-red-500"><Trash2 size={14} /></button>
+                        <button onClick={() => handleDeleteProperty(prop.id)} className="p-1 text-gray-400 hover:text-red-500"><FaTrash size={14} /></button>
                     </div>
                     <div className="space-y-1 pl-4">
                         {prop.options.map(opt => (
@@ -63,17 +62,17 @@ const VariantPropertyManager: React.FC<{
                                     onChange={e => handleUpdateOption(prop.id, opt.id, e.target.value)}
                                     className="w-full bg-[var(--color-background)] p-1 rounded text-xs"
                                 />
-                                <button onClick={() => handleDeleteOption(prop.id, opt.id)} className="p-1 text-gray-400 hover:text-red-500"><Trash2 size={14} /></button>
+                                <button onClick={() => handleDeleteOption(prop.id, opt.id)} className="p-1 text-gray-400 hover:text-red-500"><FaTrash size={14} /></button>
                             </div>
                         ))}
                     </div>
                     <button onClick={() => handleAddOption(prop.id)} className="w-full text-xs text-center mt-2 p-1 bg-[var(--color-background)] hover:bg-[var(--color-border)] rounded-md flex items-center justify-center gap-1">
-                        <Plus /> Add Option
+                        <FaPlus /> Add Option
                     </button>
                 </div>
             ))}
             <button onClick={handleAddProperty} className="w-full text-sm text-center p-2 bg-[var(--color-surface-light)] hover:bg-[var(--color-border)] rounded-md flex items-center justify-center gap-2">
-                <Plus /> Add Variant Property
+                <FaPlus /> Add Variant Property
             </button>
         </div>
     );

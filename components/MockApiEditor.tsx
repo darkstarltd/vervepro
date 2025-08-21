@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAppContext } from '../context/AppContext';
 import { MockApiEndpoint } from '../types';
-import { PlusIcon, TrashIcon, Save } from 'lucide-react';
+import { FaPlus, FaTrash, FaFloppyDisk } from 'react-icons/fa6';
 import { v4 as uuidv4 } from 'uuid';
 import MonacoEditor from 'react-monaco-editor';
 import { toast } from 'react-hot-toast';
@@ -66,7 +66,7 @@ export const MockApiEditor: React.FC = () => {
             <div className="w-1/3 bg-[var(--color-surface)] rounded-lg p-4 flex flex-col">
                 <div className="flex justify-between items-center mb-4">
                     <h3 className="font-bold">Endpoints</h3>
-                    <button onClick={handleAddNew} className="p-1 hover:bg-[var(--color-border)] rounded-md"><PlusIcon size={16}/></button>
+                    <button onClick={handleAddNew} className="p-1 hover:bg-[var(--color-border)] rounded-md"><FaPlus size={16}/></button>
                 </div>
                 <div className="flex-1 space-y-2 overflow-y-auto">
                     {mockApiEndpoints.map(endpoint => (
@@ -117,10 +117,10 @@ export const MockApiEditor: React.FC = () => {
                         </div>
                          <div className="flex-shrink-0 flex justify-end gap-3 mt-4">
                             <button onClick={handleDelete} className="px-4 py-2 bg-[var(--color-danger)] hover:bg-[var(--color-danger-hover)] rounded-md text-sm font-semibold flex items-center gap-2">
-                                <TrashIcon size={16}/> {isCreating ? 'Cancel' : 'Delete'}
+                                <FaTrash size={16}/> {isCreating ? 'Cancel' : 'Delete'}
                             </button>
                             <button onClick={handleSave} className="px-4 py-2 bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] rounded-md text-sm font-semibold flex items-center gap-2">
-                                <Save size={16}/> Save Endpoint
+                                <FaFloppyDisk size={16}/> Save Endpoint
                             </button>
                         </div>
                     </>

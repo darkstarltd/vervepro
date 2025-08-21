@@ -10,7 +10,7 @@ import { AnimationPropertyEditor } from './AnimationPropertyEditor';
 import { InteractionsPropertyEditor } from './InteractionsPropertyEditor';
 import { ImagePropertyEditor } from './ImagePropertyEditor';
 import { DataBindingEditor } from './DataBindingEditor';
-import { SlidersHorizontal, Trash2, Palette, Droplets, Zap, Sparkles, PanelRightClose, PanelLeftOpen } from 'lucide-react';
+import { FaSliders, FaTrash, FaPalette, FaDroplet, FaBolt, FaWandMagicSparkles, FaAnglesRight, FaAnglesLeft } from 'react-icons/fa6';
 import { findElementDeep } from '../lib/treeUtils';
 import { IconPicker } from './IconPicker';
 import { GlobalClassSelector } from './GlobalClassSelector';
@@ -168,11 +168,11 @@ export const PropertiesPanel: React.FC<{
                 title="Toggle Panel"
                 className="p-2 text-[var(--color-text-secondary)] hover:text-white rounded-md"
             >
-                {panels.rightCollapsed ? <PanelLeftOpen /> : <PanelRightClose />}
+                {panels.rightCollapsed ? <FaAnglesLeft /> : <FaAnglesRight />}
             </button>
         </div>
         <div className="flex-1 flex flex-col items-center justify-center text-center p-4">
-            <div className="text-5xl text-[var(--color-text-tertiary)] mb-4"><SlidersHorizontal /></div>
+            <div className="text-5xl text-[var(--color-text-tertiary)] mb-4"><FaSliders /></div>
             <p className="text-sm text-[var(--color-text-secondary)]">Select an element on the canvas to see its properties.</p>
         </div>
       </aside>
@@ -211,9 +211,9 @@ export const PropertiesPanel: React.FC<{
   };
   
   const tabs = [
-      { id: 'style', icon: <Palette size={16}/>, label: 'Style' },
-      { id: 'interactions', icon: <Zap size={16}/>, label: 'Interactions' },
-      ...(projectType === 'web' ? [{ id: 'animations', icon: <Droplets size={16}/>, label: 'Animations' }] : [])
+      { id: 'style', icon: <FaPalette />, label: 'Style' },
+      { id: 'interactions', icon: <FaBolt />, label: 'Interactions' },
+      ...(projectType === 'web' ? [{ id: 'animations', icon: <FaDroplet />, label: 'Animations' }] : [])
   ];
 
   return (
@@ -226,14 +226,14 @@ export const PropertiesPanel: React.FC<{
             </div>
             <div className="flex items-center">
                 <button onClick={onAiRefine} title="Refine with AI" className="p-2 text-[var(--color-primary)] hover:bg-[var(--color-surface-light)] rounded-md">
-                    <Sparkles size={18} />
+                    <FaWandMagicSparkles />
                 </button>
                  <button
                     onClick={() => dispatch({ type: 'SET_PANELS_STATE', payload: { rightCollapsed: !panels.rightCollapsed }})}
                     title="Toggle Panel"
                     className="p-2 text-[var(--color-text-secondary)] hover:text-white rounded-md"
                 >
-                    {panels.rightCollapsed ? <PanelLeftOpen /> : <PanelRightClose />}
+                    {panels.rightCollapsed ? <FaAnglesLeft /> : <FaAnglesRight />}
                 </button>
             </div>
         </div>

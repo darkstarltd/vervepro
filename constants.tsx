@@ -1,15 +1,13 @@
 import React from 'react';
 import { ComponentDefinition, Element, ElementTemplate, ProjectType } from './types';
 import {
-  Type, Text as TextIcon, Heading1, MousePointerClick, Image as ImageIcon, Box,
-  Columns, Rows, Grid, CircleSlash,
-  Video, CreditCard, FormInput, MessageSquare, Tag,
-  Star, BarChart, Heart, Shield, List,
-  ChevronsUpDown, Phone, Square, Code, GitCommit,
-  Navigation, Server, HardDrive, Smartphone,
-  Link as LinkIcon, Minus, MoveVertical, Users, Table as TableIcon, PieChart,
-  Activity,
-} from 'lucide-react';
+  FaParagraph, FaHeading, FaHandPointer, FaImage, FaBox,
+  FaTableColumns, FaBars, FaGrip, FaVideo, FaCreditCard,
+  FaKeyboard, FaCommentDots, FaTag, FaStar, FaList,
+  FaArrowsUpDown, FaCode, FaServer, FaLink, FaMinus,
+  FaUsers, FaTable, FaChartPie, FaChartLine, FaPlus,
+  FaWandMagicSparkles, FaTableCellsLarge, FaDiagramProject, FaHammer, FaRocket
+} from 'react-icons/fa6';
 import { v4 as uuidv4 } from 'uuid';
 
 export const createDefaultElement = (element: ElementTemplate): Element => {
@@ -27,36 +25,36 @@ export const createDefaultElement = (element: ElementTemplate): Element => {
 export const WEB_COMPONENT_LIBRARY: ComponentDefinition[] = [
   // Basic Elements
   {
-    type: 'heading', name: 'Heading', icon: <Heading1 size={20}/>, category: 'Basic',
+    type: 'heading', name: 'Heading', icon: <FaHeading />, category: 'Basic',
     defaultElement: { type: 'heading', name: 'Heading', content: 'Modern Heading', styles: { desktop: { color: 'var(--color-text-primary)', fontSize: '48px', fontWeight: '700', padding: '10px' } }, children: [] },
   },
   {
-    type: 'text', name: 'Paragraph', icon: <TextIcon size={20}/>, category: 'Basic',
+    type: 'text', name: 'Paragraph', icon: <FaParagraph />, category: 'Basic',
     defaultElement: { type: 'text', name: 'Paragraph', content: 'This is a paragraph of text. It can be edited to describe something interesting.', styles: { desktop: { color: 'var(--color-text-secondary)', fontSize: '16px', lineHeight: '1.6', padding: '10px' } }, children: [] },
   },
   {
-    type: 'button', name: 'Button', icon: <MousePointerClick size={20}/>, category: 'Basic',
+    type: 'button', name: 'Button', icon: <FaHandPointer />, category: 'Basic',
     defaultElement: { type: 'button', name: 'Button', content: 'Click Me', styles: { desktop: { backgroundColor: 'var(--color-primary)', color: 'var(--color-primary-contrast)', padding: '12px 24px', borderRadius: '8px', border: 'none', cursor: 'pointer', fontWeight: '600' } } },
   },
    {
-    type: 'link', name: 'Link', icon: <LinkIcon size={20}/>, category: 'Basic',
+    type: 'link', name: 'Link', icon: <FaLink />, category: 'Basic',
     defaultElement: { type: 'link', name: 'Link', content: 'Learn More', props: { href: '#' }, styles: { desktop: { color: 'var(--color-primary)', textDecoration: 'underline', cursor: 'pointer' } } },
   },
   {
-    type: 'image', name: 'Image', icon: <ImageIcon size={20}/>, category: 'Basic',
+    type: 'image', name: 'Image', icon: <FaImage />, category: 'Basic',
     defaultElement: { type: 'image', name: 'Image', props: { src: 'https://via.placeholder.com/300x200', alt: 'Placeholder Image' }, styles: { desktop: { width: '300px', height: '200px', objectFit: 'cover', borderRadius: '8px' } } },
   },
   {
-    type: 'icon', name: 'Icon', icon: <Star size={20} />, category: 'Basic',
+    type: 'icon', name: 'Icon', icon: <FaStar />, category: 'Basic',
     defaultElement: { type: 'icon', name: 'Icon', props: { iconSet: 'md', iconName: 'MdStar', size: 24, color: 'var(--color-accent)' }, styles: { desktop: {} } }
   },
   {
-    type: 'video', name: 'Video', icon: <Video size={20} />, category: 'Basic',
+    type: 'video', name: 'Video', icon: <FaVideo />, category: 'Basic',
     defaultElement: { type: 'video', name: 'Video Player', props: { src: 'https://www.youtube.com/embed/dQw4w9WgXcQ' }, styles: { desktop: { width: '560px', height: '315px', border: 'none', borderRadius: '8px' } } }
   },
   // Data
   {
-    type: 'table', name: 'Table', icon: <TableIcon size={20} />, category: 'Data',
+    type: 'table', name: 'Table', icon: <FaTable />, category: 'Data',
     defaultElement: {
       type: 'table', name: 'Data Table', styles: { desktop: { width: '100%', borderCollapse: 'collapse' } },
       children: [
@@ -76,33 +74,33 @@ export const WEB_COMPONENT_LIBRARY: ComponentDefinition[] = [
     }
   },
   {
-    type: 'chart', name: 'Chart', icon: <PieChart size={20} />, category: 'Data',
+    type: 'chart', name: 'Chart', icon: <FaChartPie />, category: 'Data',
     defaultElement: { type: 'chart', name: 'Chart', styles: { desktop: { width: '100%', height: '300px', backgroundColor: 'var(--color-surface-light)', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' } }, content: 'Chart Placeholder' }
   },
   // Layout
   {
-    type: 'container', name: 'Container', icon: <Box size={20}/>, category: 'Layout',
+    type: 'container', name: 'Container', icon: <FaBox />, category: 'Layout',
     defaultElement: { type: 'container', name: 'Container', styles: { desktop: { padding: '20px', backgroundColor: 'var(--color-surface-light)', borderRadius: '12px' } }, children: [] },
   },
   {
-    type: 'flex', name: 'Flexbox', icon: <Columns size={20}/>, category: 'Layout',
+    type: 'flex', name: 'Flexbox', icon: <FaTableColumns />, category: 'Layout',
     defaultElement: { type: 'flex', name: 'Flex Container', styles: { desktop: { display: 'flex', flexDirection: 'row', gap: '16px', padding: '16px', alignItems: 'center' } }, children: [] },
   },
   {
-    type: 'grid', name: 'Grid', icon: <Grid size={20}/>, category: 'Layout',
+    type: 'grid', name: 'Grid', icon: <FaGrip />, category: 'Layout',
     defaultElement: { type: 'grid', name: 'Grid Container', styles: { desktop: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', padding: '16px' } }, children: [] },
   },
   {
-    type: 'divider', name: 'Divider', icon: <Minus size={20}/>, category: 'Layout',
+    type: 'divider', name: 'Divider', icon: <FaMinus />, category: 'Layout',
     defaultElement: { type: 'divider', name: 'Divider', styles: { desktop: { width: '100%', height: '1px', backgroundColor: 'var(--color-border)', margin: '16px 0' } } },
   },
   {
-    type: 'spacer', name: 'Spacer', icon: <MoveVertical size={20}/>, category: 'Layout',
+    type: 'spacer', name: 'Spacer', icon: <FaArrowsUpDown />, category: 'Layout',
     defaultElement: { type: 'spacer', name: 'Spacer', styles: { desktop: { height: '20px', width: '20px' } } },
   },
   // UI Components
   {
-    type: 'navbar', name: 'Navbar', icon: <Navigation size={20}/>, category: 'Components',
+    type: 'navbar', name: 'Navbar', icon: <FaBars />, category: 'Components',
     defaultElement: { type: 'navbar', name: 'Navbar', styles: { desktop: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 24px', backgroundColor: 'var(--color-surface)' } },
       children: [
         { type: 'text', name: 'Logo', content: 'LOGO', styles: { desktop: { fontWeight: 'bold' } } },
@@ -115,7 +113,7 @@ export const WEB_COMPONENT_LIBRARY: ComponentDefinition[] = [
     },
   },
   {
-    type: 'card', name: 'Card', icon: <CreditCard size={20}/>, category: 'Components',
+    type: 'card', name: 'Card', icon: <FaCreditCard />, category: 'Components',
     defaultElement: {
       type: 'card', name: 'Card', styles: { desktop: { backgroundColor: 'var(--color-surface)', padding: '24px', borderRadius: '12px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' } },
       children: [
@@ -124,7 +122,7 @@ export const WEB_COMPONENT_LIBRARY: ComponentDefinition[] = [
     },
   },
     {
-    type: 'testimonial', name: 'Testimonial', icon: <Users size={20}/>, category: 'Components',
+    type: 'testimonial', name: 'Testimonial', icon: <FaUsers />, category: 'Components',
     defaultElement: {
         type: 'testimonial', name: 'Testimonial', styles: { desktop: { padding: '24px', backgroundColor: 'var(--color-surface)', borderRadius: '12px', textAlign: 'center' } },
         children: [
@@ -135,7 +133,7 @@ export const WEB_COMPONENT_LIBRARY: ComponentDefinition[] = [
     }
   },
   {
-    type: 'pricing-table', name: 'Pricing Plan', icon: <CreditCard size={20}/>, category: 'Components',
+    type: 'pricing-table', name: 'Pricing Plan', icon: <FaCreditCard />, category: 'Components',
     defaultElement: {
         type: 'pricing-table', name: 'Pricing Plan', styles: { desktop: { padding: '32px', border: '1px solid var(--color-border)', borderRadius: '12px', textAlign: 'center' } },
         children: [
@@ -147,11 +145,11 @@ export const WEB_COMPONENT_LIBRARY: ComponentDefinition[] = [
     }
   },
   {
-    type: 'badge', name: 'Badge', icon: <Tag size={20}/>, category: 'Components',
+    type: 'badge', name: 'Badge', icon: <FaTag />, category: 'Components',
     defaultElement: { type: 'badge', name: 'Badge', content: 'New', styles: { desktop: { backgroundColor: 'var(--color-primary)', color: 'var(--color-primary-contrast)', padding: '4px 8px', borderRadius: '12px', fontSize: '12px', display: 'inline-block' } } }
   },
   {
-    type: 'list', name: 'List', icon: <List size={20}/>, category: 'Components',
+    type: 'list', name: 'List', icon: <FaList />, category: 'Components',
     defaultElement: { type: 'list', name: 'List Container', styles: { desktop: { listStyle: 'none', padding: '0', margin: '0' } },
       children: [
         { type: 'text', name: 'List Item 1', content: 'List Item 1', styles: { desktop: { padding: '8px 0', borderBottom: '1px solid var(--color-border)' } } },
@@ -161,7 +159,7 @@ export const WEB_COMPONENT_LIBRARY: ComponentDefinition[] = [
     }
   },
   {
-    type: 'progress-bar', name: 'Progress Bar', icon: <Activity size={20} />, category: 'Components',
+    type: 'progress-bar', name: 'Progress Bar', icon: <FaChartLine />, category: 'Components',
     defaultElement: { type: 'progress-bar', name: 'Progress Bar', styles: { desktop: { width: '100%', height: '8px', backgroundColor: 'var(--color-surface-light)', borderRadius: '4px', overflow: 'hidden' } },
       children: [
         { type: 'container', name: 'Progress Fill', styles: { desktop: { width: '60%', height: '100%', backgroundColor: 'var(--color-primary)' } } }
@@ -169,7 +167,7 @@ export const WEB_COMPONENT_LIBRARY: ComponentDefinition[] = [
     }
   },
   {
-    type: 'accordion', name: 'Accordion', icon: <ChevronsUpDown size={20} />, category: 'Components',
+    type: 'accordion', name: 'Accordion', icon: <FaArrowsUpDown />, category: 'Components',
     defaultElement: {
       type: 'accordion', name: 'Accordion', styles: { desktop: { borderBottom: '1px solid var(--color-border)' } },
       children: [
@@ -192,14 +190,14 @@ export const WEB_COMPONENT_LIBRARY: ComponentDefinition[] = [
     }
   },
   {
-    type: 'footer', name: 'Footer', icon: <Server size={20}/>, category: 'Components',
+    type: 'footer', name: 'Footer', icon: <FaServer />, category: 'Components',
     defaultElement: { type: 'footer', name: 'Footer', styles: { desktop: { padding: '40px 20px', backgroundColor: 'var(--color-surface)', marginTop: '40px', textAlign: 'center' } },
       children: [{ type: 'text', name: 'Copyright', content: '© 2024 Your Company. All rights reserved.', styles: { desktop: { fontSize: '14px' } } }]
     },
   },
   // Form Elements
   {
-    type: 'form', name: 'Form', icon: <CreditCard size={20}/>, category: 'Forms',
+    type: 'form', name: 'Form', icon: <FaCreditCard />, category: 'Forms',
     defaultElement: {
         type: 'form', name: 'Smart Form', styles: { desktop: { display: 'flex', flexDirection: 'column', gap: '16px' } },
         children: [
@@ -213,93 +211,121 @@ export const WEB_COMPONENT_LIBRARY: ComponentDefinition[] = [
     }
   },
   {
-    type: 'input', name: 'Input', icon: <FormInput size={20}/>, category: 'Forms',
+    type: 'input', name: 'Input', icon: <FaKeyboard />, category: 'Forms',
     defaultElement: { type: 'input', name: 'Input Field', props: { placeholder: 'Enter your text...' }, styles: { desktop: { width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid var(--color-border)', backgroundColor: 'var(--color-surface)' } } }
   },
   {
-    type: 'textarea', name: 'Text Area', icon: <MessageSquare size={20}/>, category: 'Forms',
+    type: 'textarea', name: 'Text Area', icon: <FaCommentDots />, category: 'Forms',
     defaultElement: { type: 'textarea', name: 'Text Area', props: { placeholder: 'Enter a longer message...' }, styles: { desktop: { width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid var(--color-border)', backgroundColor: 'var(--color-surface)' } } }
   },
   {
-    type: 'label', name: 'Label', icon: <Tag size={20}/>, category: 'Forms',
+    type: 'label', name: 'Label', icon: <FaTag />, category: 'Forms',
     defaultElement: { type: 'label', name: 'Label', content: 'Your Label', styles: { desktop: { marginBottom: '8px', display: 'block', color: 'var(--color-text-secondary)' } } }
   },
 ];
 
 export const NATIVE_COMPONENT_LIBRARY: ComponentDefinition[] = [
   {
-    type: 'View', name: 'View', icon: <Square size={20}/>, category: 'Layout',
+    type: 'View', name: 'View', icon: <FaBox />, category: 'Layout',
     defaultElement: { type: 'View', name: 'View', styles: { desktop: { padding: 16, backgroundColor: '#2A2D42', borderRadius: 12 } }, children: [] },
   },
   {
-    type: 'Text', name: 'Text', icon: <TextIcon size={20}/>, category: 'Basic',
+    type: 'Text', name: 'Text', icon: <FaParagraph />, category: 'Basic',
     defaultElement: { type: 'Text', name: 'Text', content: 'Some text', styles: { desktop: { color: '#E0E0FF', fontSize: 16 } } },
   },
   {
-    type: 'Image', name: 'Image', icon: <ImageIcon size={20}/>, category: 'Basic',
+    type: 'Image', name: 'Image', icon: <FaImage />, category: 'Basic',
     defaultElement: { type: 'Image', name: 'Image', props: { src: 'https://via.placeholder.com/150' }, styles: { desktop: { width: 150, height: 150, borderRadius: 8 } } },
   },
   {
-    type: 'Button', name: 'Button', icon: <MousePointerClick size={20}/>, category: 'Basic',
+    type: 'Button', name: 'Button', icon: <FaHandPointer />, category: 'Basic',
     defaultElement: { type: 'Button', name: 'Button', content: 'Press Me', styles: { desktop: {} } }, // Note: React Native Button has limited styling
   },
   {
-    type: 'TextInput', name: 'Text Input', icon: <FormInput size={20}/>, category: 'Forms',
+    type: 'TextInput', name: 'Text Input', icon: <FaKeyboard />, category: 'Forms',
     defaultElement: { type: 'TextInput', name: 'Text Input', props: { placeholder: 'Enter text...' }, styles: { desktop: { borderWidth: 1, borderColor: '#3A3D5A', padding: 10, borderRadius: 6, color: 'white' } } },
   },
   {
-    type: 'scrollView', name: 'Scroll View', icon: <ChevronsUpDown size={20} />, category: 'Layout',
+    type: 'scrollView', name: 'Scroll View', icon: <FaArrowsUpDown />, category: 'Layout',
     defaultElement: { type: 'scrollView', name: 'Scroll View', styles: { desktop: { width: '100%' } }, children: [] },
   },
 ];
 
 export const FLUTTER_COMPONENT_LIBRARY: ComponentDefinition[] = [
   {
-    type: 'Container', name: 'Container', icon: <Box size={20}/>, category: 'Layout',
+    type: 'Container', name: 'Container', icon: <FaBox />, category: 'Layout',
     defaultElement: { type: 'Container', name: 'Container', styles: { desktop: { padding: { all: 16 }, color: '#2A2D42', borderRadius: 12.0 } }, children: [] },
   },
   {
-    type: 'Column', name: 'Column', icon: <Rows size={20}/>, category: 'Layout',
+    type: 'Column', name: 'Column', icon: <FaBars />, category: 'Layout',
     defaultElement: { type: 'Column', name: 'Column', styles: { desktop: { mainAxisAlignment: 'start' } }, children: [] },
   },
   {
-    type: 'Row', name: 'Row', icon: <Columns size={20}/>, category: 'Layout',
+    type: 'Row', name: 'Row', icon: <FaTableColumns />, category: 'Layout',
     defaultElement: { type: 'Row', name: 'Row', styles: { desktop: { mainAxisAlignment: 'start' } }, children: [] },
   },
   {
-    type: 'Text', name: 'Text', icon: <TextIcon size={20}/>, category: 'Basic',
+    type: 'Text', name: 'Text', icon: <FaParagraph />, category: 'Basic',
     defaultElement: { type: 'Text', name: 'Text', content: 'Flutter Text', styles: { desktop: { color: '#E0E0FF', fontSize: 16.0 } } },
   },
   {
-    type: 'ElevatedButton', name: 'Elevated Button', icon: <MousePointerClick size={20}/>, category: 'Basic',
+    type: 'ElevatedButton', name: 'Elevated Button', icon: <FaHandPointer />, category: 'Basic',
     defaultElement: { type: 'ElevatedButton', name: 'Elevated Button', styles: { desktop: {} }, children: [{ type: 'Text', name: 'Button Text', content: 'Press Me', styles: { desktop: {} } }] },
   },
   {
-    type: 'Image', name: 'Image', icon: <ImageIcon size={20}/>, category: 'Basic',
+    type: 'Image', name: 'Image', icon: <FaImage />, category: 'Basic',
     defaultElement: { type: 'Image', name: 'Image', props: { src: 'https://via.placeholder.com/150' }, styles: { desktop: { width: 150, height: 150 } } },
   },
 ];
 
 export const KOTLIN_COMPONENT_LIBRARY: ComponentDefinition[] = [
   {
-    type: 'Column', name: 'Column', icon: <Rows size={20}/>, category: 'Layout',
+    type: 'Column', name: 'Column', icon: <FaBars />, category: 'Layout',
     defaultElement: { type: 'Column', name: 'Column', styles: { desktop: { padding: 16 } }, children: [] },
   },
   {
-    type: 'Row', name: 'Row', icon: <Columns size={20}/>, category: 'Layout',
+    type: 'Row', name: 'Row', icon: <FaTableColumns />, category: 'Layout',
     defaultElement: { type: 'Row', name: 'Row', styles: { desktop: { padding: 16 } }, children: [] },
   },
   {
-    type: 'Text', name: 'Text', icon: <TextIcon size={20}/>, category: 'Basic',
+    type: 'Text', name: 'Text', icon: <FaParagraph />, category: 'Basic',
     defaultElement: { type: 'Text', name: 'Text', content: 'Compose Text', styles: { desktop: { color: '#E0E0FF', fontSize: 16 } } },
   },
   {
-    type: 'Button', name: 'Button', icon: <MousePointerClick size={20}/>, category: 'Basic',
+    type: 'Button', name: 'Button', icon: <FaHandPointer />, category: 'Basic',
     defaultElement: { type: 'Button', name: 'Button', styles: { desktop: {} }, children: [{ type: 'Text', name: 'Button Text', content: 'Click', styles: { desktop: {} } }] },
   },
   {
-    type: 'Image', name: 'Image', icon: <ImageIcon size={20}/>, category: 'Basic',
+    type: 'Image', name: 'Image', icon: <FaImage />, category: 'Basic',
     defaultElement: { type: 'Image', name: 'Image', props: { src: 'https://via.placeholder.com/150' }, styles: { desktop: { width: 150, height: 150 } } },
+  },
+  {
+    type: 'Card', name: 'Card', icon: <FaCreditCard />, category: 'Material',
+    defaultElement: { type: 'Card', name: 'Material Card', styles: { desktop: { padding: 16 } }, children: [{ type: 'Text', name: 'Card Content', content: 'Card content goes here', styles: { desktop: {} } }] },
+  },
+  {
+    type: 'FloatingActionButton', name: 'Floating Action Button', icon: <FaPlus />, category: 'Material',
+    defaultElement: { type: 'FloatingActionButton', name: 'FAB', styles: { desktop: {} }, children: [{ type: 'Text', name: 'Icon Placeholder', content: '+', styles: { desktop: { color: '#FFFFFF', fontSize: 24 } } }] },
+  },
+  {
+    type: 'Chip', name: 'Chip', icon: <FaTag />, category: 'Material',
+    defaultElement: { type: 'Chip', name: 'Chip', content: 'Chip Text', styles: { desktop: {} } },
+  },
+  {
+    type: 'LottieAnimation', name: 'Lottie Animation', icon: <FaWandMagicSparkles />, category: 'Advanced',
+    defaultElement: { type: 'LottieAnimation', name: 'Lottie Animation', props: { src: 'https://assets10.lottiefiles.com/packages/lf20_v92o5d7m.json' }, styles: { desktop: { width: 150, height: 150 } } },
+  },
+  {
+    type: 'ShimmerLayout', name: 'Shimmer Layout', icon: <FaImage />, category: 'Advanced',
+    defaultElement: { type: 'ShimmerLayout', name: 'Shimmer Layout', styles: { desktop: {} }, children: [
+        { type: 'Row', name: 'Shimmer Content', styles: { desktop: { alignItems: 'center', gap: 16 } }, children: [
+            { type: 'Container', name: 'Image Placeholder', styles: { desktop: { height: 60, width: 60, borderRadius: 30, backgroundColor: '#444' } } },
+            { type: 'Column', name: 'Shimmer Text', styles: { desktop: { flex: 1, gap: 8 } }, children: [
+                { type: 'Container', name: 'Line 1', styles: { desktop: { height: 16, width: '90%', backgroundColor: '#444', borderRadius: 8 } } },
+                { type: 'Container', name: 'Line 2', styles: { desktop: { height: 16, width: '70%', backgroundColor: '#444', borderRadius: 8 } } },
+            ]}
+        ]}
+    ] },
   },
 ];
 

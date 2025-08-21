@@ -1,31 +1,31 @@
 import React from 'react';
 import { 
-    Sparkles, 
-    Upload, 
-    Image, 
-    Plus, 
-    Search, 
-    Trash2, 
-    ChevronDown, 
-    SlidersHorizontal, 
-    LucideProps,
-    Database,
-    FileJson,
-    Folder,
-    FolderTree,
-    Network
-} from 'lucide-react';
+    FaWandMagicSparkles,
+    FaUpload,
+    FaImage,
+    FaPlus,
+    FaMagnifyingGlass,
+    FaTrash,
+    FaChevronDown,
+    FaSliders,
+    FaDatabase,
+    FaFileCode,
+    FaFolder,
+    FaSitemap,
+    FaNetworkWired
+} from 'react-icons/fa6';
+import { IconBaseProps } from 'react-icons';
 
-export const MagicIcon: React.FC<LucideProps> = (props) => <Sparkles {...props} />;
-export const UploadIcon: React.FC<LucideProps> = (props) => <Upload {...props} />;
-export const ImageIcon: React.FC<LucideProps> = (props) => <Image {...props} />;
-export const PlusIcon: React.FC<LucideProps> = (props) => <Plus {...props} />;
-export const SearchIcon: React.FC<LucideProps> = (props) => <Search {...props} />;
-export const TrashIcon: React.FC<LucideProps> = (props) => <Trash2 {...props} />;
-export const ChevronDownIcon: React.FC<LucideProps> = (props) => <ChevronDown {...props} />;
-export const SlidersIcon: React.FC<LucideProps> = (props) => <SlidersHorizontal {...props} />;
-export const DatabaseIcon: React.FC<LucideProps> = (props) => <Database {...props} />;
-export const FileJsonIcon: React.FC<LucideProps> = (props) => <FileJson {...props} />;
-export const FolderIcon: React.FC<LucideProps> = (props) => <Folder {...props} />;
-export const FolderTreeIcon: React.FC<LucideProps> = (props) => <FolderTree {...props} />;
-export const NetworkIcon: React.FC<LucideProps> = (props) => <Network {...props} />;
+export const MagicIcon: React.FC<IconBaseProps> = (props) => <FaWandMagicSparkles {...props} />;
+export const UploadIcon: React.FC<IconBaseProps> = (props) => <FaUpload {...props} />;
+export const ImageIcon: React.FC<IconBaseProps> = (props) => <FaImage {...props} />;
+export const PlusIcon: React.FC<IconBaseProps> = (props) => <FaPlus {...props} />;
+export const SearchIcon: React.FC<IconBaseProps> = (props) => <FaMagnifyingGlass {...props} />;
+export const TrashIcon: React.FC<IconBaseProps> = (props) => <FaTrash {...props} />;
+export const ChevronDownIcon: React.FC<IconBaseProps> = (props) => <FaChevronDown {...props} />;
+export const SlidersIcon: React.FC<IconBaseProps> = (props) => <FaSliders {...props} />;
+export const DatabaseIcon: React.FC<IconBaseProps> = (props) => <FaDatabase {...props} />;
+export const FileJsonIcon: React.FC<IconBaseProps> = (props) => <FaFileCode {...props} />;
+export const FolderIcon: React.FC<IconBaseProps> = (props) => <FaFolder {...props} />;
+export const FolderTreeIcon: React.FC<IconBaseProps> = (props) => <FaSitemap {...props} />;
+export const NetworkIcon: React.FC<IconBaseProps> = (props) => <FaNetworkWired {...props} />;

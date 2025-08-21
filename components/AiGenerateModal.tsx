@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
+import { FaLink, FaPencil, FaBriefcase, FaWandMagicSparkles, FaImage } from 'react-icons/fa6';
 import { useIsMounted } from '../hooks/useIsMounted';
-import { Link, PencilLine, Briefcase, Sparkles, ImageUp } from 'lucide-react';
 
 interface AiGenerateModalProps {
   onClose: () => void;
@@ -67,17 +67,17 @@ export const AiGenerateModal: React.FC<AiGenerateModalProps> = ({ onClose, onGen
   };
 
   const tabs: {id: Tab, label: string, icon: React.ReactNode}[] = [
-      { id: 'prompt', label: 'From Prompt', icon: <PencilLine size={16} /> },
-      { id: 'image', label: 'From Image', icon: <ImageUp size={16}/> },
-      { id: 'url', label: 'From URL', icon: <Link size={16}/> },
-      { id: 'brief', label: 'From Brief', icon: <Briefcase size={16}/> },
+      { id: 'prompt', label: 'From Prompt', icon: <FaPencil size={16} /> },
+      { id: 'image', label: 'From Image', icon: <FaImage size={16}/> },
+      { id: 'url', label: 'From URL', icon: <FaLink size={16}/> },
+      { id: 'brief', label: 'From Brief', icon: <FaBriefcase size={16}/> },
   ];
 
   return (
     <div className="fixed inset-0 bg-gray-900/80 flex items-center justify-center z-50" onClick={onClose}>
       <div className="bg-[var(--color-surface)] rounded-lg shadow-xl w-full max-w-2xl flex flex-col" onClick={e => e.stopPropagation()}>
         <div className="p-4 border-b border-[var(--color-border)] flex justify-between items-center">
-          <h2 className="text-lg font-bold flex items-center gap-2"><span className="text-[var(--color-primary)]"><Sparkles /></span> Generate with AI</h2>
+          <h2 className="text-lg font-bold flex items-center gap-2"><span className="text-[var(--color-primary)]"><FaWandMagicSparkles /></span> Generate with AI</h2>
           <button onClick={onClose} className="text-[var(--color-text-secondary)] hover:text-white">&times;</button>
         </div>
         
@@ -149,7 +149,7 @@ export const AiGenerateModal: React.FC<AiGenerateModalProps> = ({ onClose, onGen
                              <img src={image} alt="upload preview" className="max-h-32 mx-auto rounded-md" />
                         ) : (
                             <div className="text-[var(--color-text-secondary)]">
-                                <ImageUp className="mx-auto mb-2" />
+                                <FaImage className="mx-auto mb-2" />
                                 <p>Upload an image (optional)</p>
                                 <p className="text-xs">A wireframe or screenshot can help guide the AI.</p>
                             </div>
@@ -165,7 +165,7 @@ export const AiGenerateModal: React.FC<AiGenerateModalProps> = ({ onClose, onGen
             disabled={isLoading}
             className="px-6 py-2 bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-[var(--color-primary-contrast)] font-bold rounded-md text-sm transition-all duration-300 transform hover:scale-105 flex items-center gap-2 disabled:opacity-50 disabled:cursor-wait"
           >
-            <Sparkles size={16}/> {isLoading ? 'Generating...' : 'Generate'}
+            <FaWandMagicSparkles size={16}/> {isLoading ? 'Generating...' : 'Generate'}
           </button>
         </div>
       </div>

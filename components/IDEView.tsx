@@ -1,9 +1,8 @@
-
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import MonacoEditor from 'react-monaco-editor';
 import { useAppContext } from '../context/AppContext';
 import { FileNode, Page, CustomComponent, StateVariable, MockApiEndpoint, DeepReadonly } from '../types';
-import { RefreshCw, ExternalLink } from 'lucide-react';
+import { FaRotate, FaArrowUpRightFromSquare } from 'react-icons/fa6';
 import { TerminalPanel } from './TerminalPanel';
 import { generateProjectFiles } from '../lib/generateCode';
 import { toast } from 'react-hot-toast';
@@ -181,7 +180,7 @@ export const IDEView: React.FC = () => {
             <aside style={{ width: `${panelSizes.left}px`}} className="bg-[var(--color-surface)] flex flex-col flex-shrink-0">
                 <div className="flex-shrink-0 flex justify-between items-center p-2 border-b border-[var(--color-border)]">
                     <h2 className="font-bold text-lg">Workspace</h2>
-                    <button onClick={generateAndSetFiles} className="p-1 hover:bg-[var(--color-surface-light)] rounded-md" title="Regenerate Files"><RefreshCw size={16}/></button>
+                    <button onClick={generateAndSetFiles} className="p-1 hover:bg-[var(--color-surface-light)] rounded-md" title="Regenerate Files"><FaRotate size={16}/></button>
                 </div>
                 <div className="flex-1 overflow-y-auto p-1">
                     {isLoading ? <p className="text-sm text-center p-4 text-[var(--color-text-tertiary)]">Loading...</p>
@@ -208,8 +207,8 @@ export const IDEView: React.FC = () => {
                 <div className="flex-shrink-0 p-2 flex justify-between items-center border-b border-[var(--color-border)]">
                     <h2 className="font-bold text-lg">Live Preview</h2>
                     <div className="flex items-center gap-2">
-                        <button onClick={createPreviewHtml} title="Refresh Preview" className="p-1 hover:bg-[var(--color-surface)] rounded-md"><RefreshCw size={16} /></button>
-                        <a href={`data:text/html,${encodeURIComponent(previewHtml)}`} target="_blank" rel="noopener noreferrer" title="Open in new tab" className="p-1 hover:bg-[var(--color-surface)] rounded-md"><ExternalLink size={16} /></a>
+                        <button onClick={createPreviewHtml} title="Refresh Preview" className="p-1 hover:bg-[var(--color-surface)] rounded-md"><FaRotate size={16} /></button>
+                        <a href={`data:text/html,${encodeURIComponent(previewHtml)}`} target="_blank" rel="noopener noreferrer" title="Open in new tab" className="p-1 hover:bg-[var(--color-surface)] rounded-md"><FaArrowUpRightFromSquare size={16} /></a>
                     </div>
                 </div>
                 <iframe

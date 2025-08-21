@@ -5,7 +5,7 @@ import { componentLibrary } from '../constants';
 import { useDraggable } from '@dnd-kit/core';
 import { ComponentDefinition, CustomComponent } from '../types';
 import { CollapsibleSection } from './StylePropertyEditor';
-import { Component } from 'lucide-react';
+import { FaCube } from 'react-icons/fa6';
 
 const DraggableItem: React.FC<{
   id: string;
@@ -52,7 +52,7 @@ export const ComponentLibrary: React.FC = () => {
                 id={`custom-component-${comp.id}`}
                 data={{ componentId: comp.id, isCustomComponent: true }}
                 name={comp.name}
-                icon={<Component size={20} />}
+                icon={<FaCube size={20} />}
               />
             ))}
           </div>

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAppContext } from '../context/AppContext';
 import { Viewport, DeepReadonly, Element } from '../types';
-import { Code, ZoomIn, ZoomOut, RotateCcw, Terminal } from 'lucide-react';
+import { FaCode, FaMagnifyingGlassPlus, FaMagnifyingGlassMinus, FaArrowRotateRight, FaTerminal } from 'react-icons/fa6';
 
 export const StatusBar: React.FC<{
   selectedElementPath?: readonly Element[];
@@ -57,10 +57,10 @@ export const StatusBar: React.FC<{
         <div className="h-8 bg-[var(--color-surface-light)] border-t border-[var(--color-border)] flex items-center justify-between px-4 text-xs text-[var(--color-text-secondary)]">
             <div className="flex items-center gap-4 min-w-0">
                 <button onClick={() => handleToggleBottomPanel('terminal')} className={`flex items-center gap-1 hover:text-white ${panels.bottomActivePanel === 'terminal' ? 'text-[var(--color-primary)]' : ''}`}>
-                    <Terminal size={16} /> Terminal
+                    <FaTerminal /> Terminal
                 </button>
                  <button onClick={() => handleToggleBottomPanel('code')} className={`flex items-center gap-1 hover:text-white ${panels.bottomActivePanel === 'code' ? 'text-[var(--color-primary)]' : ''}`}>
-                    <Code size={16} /> Code Preview
+                    <FaCode /> Code Preview
                 </button>
                 {breadcrumbs && (
                     <div className="hidden md:flex items-center gap-2 min-w-0">
@@ -71,9 +71,9 @@ export const StatusBar: React.FC<{
             </div>
             <div className="flex items-center gap-4">
                  <div className="flex items-center gap-1 bg-[var(--color-background)] p-0.5 rounded-md">
-                    <button onClick={() => handleZoom('out')} className="px-1 py-0.5 rounded-md hover:bg-[var(--color-surface)]"><ZoomOut size={14}/></button>
+                    <button onClick={() => handleZoom('out')} className="px-1 py-0.5 rounded-md hover:bg-[var(--color-surface)]"><FaMagnifyingGlassMinus /></button>
                     <button onClick={() => handleZoom('reset')} className="px-2 py-0.5 rounded-md hover:bg-[var(--color-surface)] w-16 text-center">{Math.round(canvasZoom * 100)}%</button>
-                    <button onClick={() => handleZoom('in')} className="px-1 py-0.5 rounded-md hover:bg-[var(--color-surface)]"><ZoomIn size={14}/></button>
+                    <button onClick={() => handleZoom('in')} className="px-1 py-0.5 rounded-md hover:bg-[var(--color-surface)]"><FaMagnifyingGlassPlus /></button>
                 </div>
                 {isWeb && (
                     <>

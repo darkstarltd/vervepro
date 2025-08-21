@@ -1,7 +1,7 @@
 import React from 'react';
 import { CustomComponent, ComponentSlot, DeepReadonly } from '../types';
 import { useAppContext } from '../context/AppContext';
-import { Plus, Trash2 } from 'lucide-react';
+import { FaPlus, FaTrash } from 'react-icons/fa6';
 import { v4 as uuidv4 } from 'uuid';
 
 export const ComponentSlotEditor: React.FC<{
@@ -50,7 +50,7 @@ export const ComponentSlotEditor: React.FC<{
                             className="w-full bg-[var(--color-surface-light)] p-2 rounded text-sm border border-[var(--color-border)]"
                         />
                         <button onClick={() => handleDeleteSlot(slot.id)} className="p-2 text-gray-400 hover:text-red-500">
-                            <Trash2 size={14} />
+                            <FaTrash size={14} />
                         </button>
                     </div>
                 ))}
@@ -59,7 +59,7 @@ export const ComponentSlotEditor: React.FC<{
                 onClick={handleAddSlot}
                 className="w-full text-sm text-center p-2 bg-[var(--color-surface-light)] hover:bg-[var(--color-border)] rounded-md flex items-center justify-center gap-2"
             >
-                <Plus /> Add Slot
+                <FaPlus /> Add Slot
             </button>
         </div>
     );

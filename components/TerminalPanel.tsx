@@ -1,10 +1,13 @@
 import React, { useState, useEffect, useRef, KeyboardEvent, useCallback } from 'react';
+import { useAppContext } from '../context/AppContext';
 
 const TerminalOutput: React.FC<{ line: string }> = ({ line }) => {
     return <div dangerouslySetInnerHTML={{ __html: line.replace(/ /g, '&nbsp;') }} />;
 };
 
 export const TerminalPanel: React.FC = () => {
+    const { state, dispatch } = useAppContext();
+    const { unsavedChanges, commits } = state;
     const [history, setHistory] = useState<string[]>(['Pro-Verve Terminal v2.0. Type `help` for commands.']);
     const [input, setInput] = useState('');
     const [commandHistory, setCommandHistory] = useState<string[]>([]);
@@ -20,57 +23,47 @@ export const TerminalPanel: React.FC = () => {
                     'Available commands:',
                     '> <span class="text-cyan-400">help</span>              - Shows this help message.',
                     '> <span class="text-cyan-400">clear</span>             - Clears the terminal screen.',
-                    '> <span class="text-cyan-400">date</span>              - Displays the current date and time.',
+                    '> <span class="text-cyan-400">git</span>               - Interact with source control (status, log, commit).',
                     '> <span class="text-cyan-400">proverve</span>          - Displays system information.',
-                    '> <span class="text-cyan-400">ls</span>                - Lists mock project files.',
-                    '> <span class="text-cyan-400">flutter doctor</span>    - Checks Flutter installation status.',
-                    '> <span class="text-cyan-400">npm install</span>       - Simulates installing a package.',
                 ];
                 break;
             case 'clear':
                 setHistory([]);
                 return;
-            case 'date':
-                output = `Current time: ${new Date().toLocaleString()}`;
-                break;
             case 'proverve':
                 output = [
-                    '<span class="text-cyan-400"> ____  ____   ___  ____  ____  __    ____</span>',
-                    '<span class="text-cyan-400">(  _ \\(  _ \\ / __)(  _ \\(  _ \\(  )  (  _ \\</span>',
-                    '<span class="text-cyan-400"> ) __/ )   / \\__ \\ ) __/ )   // (_/\\ ) _ <</span>',
-                    '<span class="text-cyan-400">(__)  (__\\_) (___/(__)  (__\\_) \\____/(____/</span>',
-                    ' ',
                     'Pro-Verve Visual Development Environment',
                     '<span class="text-gray-500">Version:</span> 2.0.1',
                     '<span class="text-gray-500">AI Core:</span> Gemini 2.5 Flash',
                     '<span class="text-gray-500">Status:</span> <span class="text-green-400">All systems operational</span>'
                 ];
                 break;
-            case 'ls':
-                output = [
-                    '<span class="text-blue-400">src/</span>    <span class="text-blue-400">public/</span>   package.json',
-                    'README.md  vite.config.ts'
-                ];
-                break;
-            case 'flutter':
-                if (args[0]?.toLowerCase() === 'doctor') {
-                     output = [
-                        '[<span class="text-green-400">✓</span>] Flutter (Channel stable, 3.13.0)',
-                        '[<span class="text-green-400">✓</span>] Android toolchain - develop for Android devices',
-                        '[<span class="text-yellow-400">!</span>] Xcode - develop for iOS and macOS (Xcode not installed)',
-                        '[<span class="text-green-400">✓</span>] Connected device (1 available)',
-                        '',
-                        '• No issues found!'
-                     ];
-                }
-                break;
-            case 'npm':
-                 if (args[0]?.toLowerCase() === 'install') {
-                    const pkg = args[1] || 'react';
-                     output = [
-                        `+ ${pkg}@latest`,
-                        'added 1 package from 1 contributor in 0.5s'
-                     ];
+            case 'git':
+                const gitCmd = args[0]?.toLowerCase();
+                if (gitCmd === 'status') {
+                    output = `You have <span class="text-yellow-400">${unsavedChanges}</span> unsaved changes.`;
+                } else if (gitCmd === 'log') {
+                    if (commits.length === 0) {
+                        output = 'No commits yet.';
+                    } else {
+                        output = commits.flatMap(c => [
+                            `<span class="text-yellow-400">commit ${c.id}</span>`,
+                            `Date:   ${new Date(c.timestamp).toLocaleString()}`,
+                            ``,
+                            `    ${c.message}`,
+                            ` `
+                        ]);
+                    }
+                } else if (gitCmd === 'commit' && args[1] === '-m') {
+                    const message = args.slice(2).join(' ');
+                    if (message) {
+                        dispatch({ type: 'COMMIT_CHANGES', payload: message });
+                        output = `Committed changes: "${message}"`;
+                    } else {
+                        output = 'Please provide a commit message.';
+                    }
+                } else {
+                    output = 'Usage: git <status|log|commit -m "message">';
                 }
                 break;
         }

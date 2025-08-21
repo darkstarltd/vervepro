@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { CodeSnippet } from '../types';
-import { Sparkles } from 'lucide-react';
+import { FaWandMagicSparkles } from 'react-icons/fa6';
 
 export const ImportCodeModal: React.FC<{
   onClose: () => void;
@@ -52,7 +52,7 @@ export const ImportCodeModal: React.FC<{
                         <div className="flex gap-2">
                             <input type="text" value={aiPrompt} onChange={e => setAiPrompt(e.target.value)} placeholder="Describe the code you need..." className="w-full bg-[var(--color-background)] p-2 rounded border border-[var(--color-border)]" />
                             <button onClick={handleAiGenerate} disabled={isGenerating} className="px-4 py-2 bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] rounded-md text-sm font-bold flex items-center gap-2 disabled:opacity-50">
-                                <Sparkles size={16}/> {isGenerating ? '...' : 'Generate'}
+                                <FaWandMagicSparkles size={16}/> {isGenerating ? '...' : 'Generate'}
                             </button>
                         </div>
                      </div>

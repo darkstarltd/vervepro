@@ -1,7 +1,6 @@
-
 import React, { useState } from 'react';
 import { FileNode, DeepReadonly } from '../types';
-import { ChevronDown, FileText, Folder } from 'lucide-react';
+import { FaChevronDown, FaFolder } from 'react-icons/fa6';
 import { getIconForFile } from '../lib/file-icons';
 
 interface FileTreeViewProps {
@@ -28,7 +27,7 @@ const TreeNode: React.FC<{
         onSelect(node, path);
     };
 
-    const icon = isFolder ? <Folder size={16} className="text-yellow-500" /> : getIconForFile(node.name);
+    const icon = isFolder ? <FaFolder size={16} className="text-yellow-500" /> : getIconForFile(node.name);
 
     return (
         <div>
@@ -38,7 +37,7 @@ const TreeNode: React.FC<{
                 style={{ paddingLeft: `${level * 16}px` }}
             >
                 <div className="w-5 h-5 flex items-center justify-center">
-                    {isFolder ? <ChevronDown size={14} className={`transition-transform ${isOpen ? 'rotate-0' : '-rotate-90'}`} /> : <div className="w-[14px]"></div>}
+                    {isFolder ? <FaChevronDown size={14} className={`transition-transform ${isOpen ? 'rotate-0' : '-rotate-90'}`} /> : <div className="w-[14px]"></div>}
                 </div>
                 <span className="w-5 h-5 flex items-center justify-center">{icon}</span>
                 <span className="truncate">{node.name}</span>

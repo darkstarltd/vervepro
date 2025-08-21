@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link, Mail, MoreHorizontal } from 'lucide-react';
+import { FaLink, FaEnvelope } from 'react-icons/fa6';
 
 export const ShareModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
     return (
@@ -11,7 +11,7 @@ export const ShareModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                 </div>
                 <div className="p-6 space-y-4">
                     <div className="flex items-center gap-2">
-                        <Mail size={18} className="text-[var(--color-text-secondary)]"/>
+                        <FaEnvelope size={18} className="text-[var(--color-text-secondary)]"/>
                         <input
                             type="email"
                             placeholder="Invite people by email..."
@@ -27,7 +27,7 @@ export const ShareModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                         <div className="flex-1 h-px bg-[var(--color-border)]"></div>
                     </div>
                      <button className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-[var(--color-surface-light)] hover:bg-[var(--color-border)] text-sm font-medium rounded-md">
-                        <Link size={16}/> Copy public link
+                        <FaLink size={16}/> Copy public link
                     </button>
 
                     <h3 className="text-md font-semibold pt-4">People with access</h3>

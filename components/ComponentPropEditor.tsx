@@ -1,7 +1,7 @@
 import React from 'react';
 import { CustomComponent, DeepReadonly, PropDefinition } from '../types';
 import { useAppContext } from '../context/AppContext';
-import { Plus, Trash2, Sparkles } from 'lucide-react';
+import { FaPlus, FaTrash, FaWandMagicSparkles } from 'react-icons/fa6';
 import { v4 as uuidv4 } from 'uuid';
 import { generatePropDescription } from '../lib/ai';
 import { toast } from 'react-hot-toast';
@@ -79,7 +79,7 @@ export const ComponentPropEditor: React.FC<{
                                 placeholder="Default"
                             />
                             <button onClick={() => handleDeleteProp(index)} className="col-span-1 p-2 text-gray-400 hover:text-red-500 flex justify-center">
-                                <Trash2 size={14} />
+                                <FaTrash size={14} />
                             </button>
                         </div>
                         <div className="flex items-center gap-2">
@@ -91,7 +91,7 @@ export const ComponentPropEditor: React.FC<{
                                 placeholder="Prop description..."
                             />
                             <button onClick={() => handleAiDescription(index)} title="Generate Description with AI" className="p-2 text-[var(--color-primary)] hover:bg-[var(--color-background)] rounded-md">
-                                <Sparkles size={16}/>
+                                <FaWandMagicSparkles size={16}/>
                             </button>
                         </div>
                     </div>
@@ -101,7 +101,7 @@ export const ComponentPropEditor: React.FC<{
                 onClick={handleAddProp}
                 className="w-full text-sm text-center p-2 bg-[var(--color-surface-light)] hover:bg-[var(--color-border)] rounded-md flex items-center justify-center gap-2"
             >
-                <Plus /> Add Prop
+                <FaPlus /> Add Prop
             </button>
         </div>
     );

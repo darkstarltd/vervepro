@@ -1,5 +1,5 @@
 import React from 'react';
-import { UploadCloud } from 'lucide-react';
+import { FaUpload } from 'react-icons/fa6';
 
 export const ImportModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
     const renderOption = (title: string, description: string, icon: React.ReactNode) => (
@@ -17,7 +17,7 @@ export const ImportModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
             <div className="bg-[var(--color-surface)] rounded-lg shadow-xl w-full max-w-2xl" onClick={e => e.stopPropagation()}>
                 <div className="p-4 border-b border-[var(--color-border)] flex justify-between items-center">
                     <h2 className="text-lg font-bold flex items-center gap-2">
-                        <UploadCloud size={20} className="text-[var(--color-primary)]" />
+                        <FaUpload size={20} className="text-[var(--color-primary)]" />
                         Import Design
                     </h2>
                     <button onClick={onClose} className="text-[var(--color-text-secondary)] hover:text-white">&times;</button>

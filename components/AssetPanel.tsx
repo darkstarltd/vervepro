@@ -1,7 +1,7 @@
 import React, { useRef } from 'react';
 import { useAppContext } from '../context/AppContext';
 import { v4 as uuidv4 } from 'uuid';
-import { Upload, Trash2 } from 'lucide-react';
+import { FaUpload, FaTrash } from 'react-icons/fa6';
 import { toast } from 'react-hot-toast';
 import { useDraggable } from '@dnd-kit/core';
 import { Asset } from '../types';
@@ -39,7 +39,7 @@ const DraggableAsset: React.FC<{ asset: Asset }> = ({ asset }) => {
                     onClick={(e) => handleDelete(e, asset.id)}
                     className="self-end p-1 bg-red-600/80 hover:bg-red-500 rounded-full"
                 >
-                    <Trash2 size={14} />
+                    <FaTrash size={14} />
                 </button>
             </div>
         </div>
@@ -85,7 +85,7 @@ export const AssetPanel: React.FC = () => {
                 onClick={() => fileInputRef.current?.click()}
                 className="w-full mb-4 px-4 py-2 bg-[var(--color-surface-light)] hover:bg-[var(--color-border)] text-sm font-medium rounded-md flex items-center justify-center gap-2"
             >
-                <Upload /> Upload Asset
+                <FaUpload /> Upload Asset
             </button>
             <div className="space-y-2">
                 {assets.length === 0 ? (

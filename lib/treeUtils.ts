@@ -1,4 +1,4 @@
-import { Element, ResponsiveStyles, CustomComponent, DeepReadonly, ComponentSlot, ElementAnimation, ActionStep } from '../types';
+import { Element, ResponsiveStyles, CustomComponent, DeepReadonly, ComponentSlot, ElementAnimation, ActionStep, Style, Viewport } from '../types';
 import { v4 as uuidv4 } from 'uuid';
 import { produce } from 'immer';
 
@@ -114,6 +114,9 @@ const replaceSlots = (mainChildren: readonly Element[], instanceChildren: DeepRe
     }).flat();
 };
 
+const mergeStyles = (...styles: (Readonly<Style> | undefined)[]): Style => {
+    return styles.reduce((acc, style) => ({ ...acc, ...style }), {});
+};
 
 export const mergeElements = (main: DeepReadonly<Element>, instance: DeepReadonly<Element>, mainComponentDef: DeepReadonly<CustomComponent>): Element => {
   return produce(main as Element, draft => {
@@ -121,10 +124,25 @@ export const mergeElements = (main: DeepReadonly<Element>, instance: DeepReadonl
     draft.componentId = instance.componentId;
     draft.name = instance.name;
     
+    // --- Variant Style Merging Logic ---
+    const selectedVariants = (instance.props as any)?.variants || {};
+    let variantStyles: ResponsiveStyles = { desktop: {} };
+
+    if (mainComponentDef.variantStyleOverrides) {
+        mainComponentDef.variantStyleOverrides.forEach(override => {
+            const isMatch = Object.entries(override.variantCombination).every(([propId, optionId]) => selectedVariants[propId] === optionId);
+            if (isMatch) {
+                 for (const viewport of ['desktop', 'tablet', 'mobile'] as Viewport[]) {
+                    variantStyles[viewport] = mergeStyles(variantStyles[viewport], override.styles[viewport]);
+                 }
+            }
+        });
+    }
+
     draft.styles = {
-        desktop: { ...(main.styles.desktop || {}), ...(instance.styles.desktop || {}) },
-        tablet: { ...(main.styles.tablet || {}), ...(instance.styles.tablet || {}) },
-        mobile: { ...(main.styles.mobile || {}), ...(instance.styles.mobile || {}) },
+        desktop: mergeStyles(main.styles.desktop, variantStyles.desktop, instance.styles.desktop),
+        tablet: mergeStyles(main.styles.tablet, variantStyles.tablet, instance.styles.tablet),
+        mobile: mergeStyles(main.styles.mobile, variantStyles.mobile, instance.styles.mobile),
     };
     
     const defaultProps: { [key: string]: any } = {};
@@ -147,4 +165,26 @@ export const mergeElements = (main: DeepReadonly<Element>, instance: DeepReadonl
         draft.children = replaceSlots(draft.children, instance.children, defaultSlot?.id);
     }
   });
+};
+
+export const isObject = (item: any): item is object => (item && typeof item === 'object' && !Array.isArray(item));
+
+export const deepMerge = <T extends object, U extends object>(target: T, source: U): T & U => {
+    let output = { ...target } as T & U;
+    if (isObject(target) && isObject(source)) {
+        Object.keys(source).forEach(key => {
+            const sourceValue = (source as any)[key];
+            const targetValue = (target as any)[key];
+            if (isObject(sourceValue)) {
+                if (!(key in target)) {
+                    Object.assign(output, { [key]: sourceValue });
+                } else {
+                    (output as any)[key] = deepMerge(targetValue, sourceValue);
+                }
+            } else {
+                Object.assign(output, { [key]: sourceValue });
+            }
+        });
+    }
+    return output;
 };
