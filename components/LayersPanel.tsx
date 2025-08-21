@@ -15,9 +15,9 @@ const getElementIcon = (element: DeepReadonly<Element>, projectType: ProjectType
     return '📄';
 };
 
-const findAncestors = (elements: readonly Element[], elementId: string): string[] => {
+const findAncestors = (elements: readonly DeepReadonly<Element>[], elementId: string): string[] => {
     const path: string[] = [];
-    const search = (els: readonly Element[], targetId: string): boolean => {
+    const search = (els: readonly DeepReadonly<Element>[], targetId: string): boolean => {
         for (const el of els) {
             if (el.id === targetId) return true;
             if (el.children && el.children.length > 0) {
@@ -97,9 +97,9 @@ const SortableTreeItem: React.FC<{
 };
 
 
-const flattenTree = (elements: readonly Element[]): { element: DeepReadonly<Element>, parentId: string | null }[] => {
+const flattenTree = (elements: readonly DeepReadonly<Element>[]): { element: DeepReadonly<Element>, parentId: string | null }[] => {
     let result: { element: DeepReadonly<Element>, parentId: string | null }[] = [];
-    const recurse = (els: readonly Element[], parentId: string | null) => {
+    const recurse = (els: readonly DeepReadonly<Element>[], parentId: string | null) => {
         for (const el of els) {
             result.push({ element: el, parentId });
             if (el.children) recurse(el.children, el.id);

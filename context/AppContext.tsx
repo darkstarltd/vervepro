@@ -79,6 +79,7 @@ type Action =
   | { type: 'DELETE_COMPONENT_SLOT', payload: { componentId: string, slotId: string } }
   | { type: 'ADD_LOGIC_FLOW'; payload: { pageId: string; flow: LogicFlow } }
   | { type: 'SET_WORKSPACE', payload: FileNode[] }
+  | { type: 'UPDATE_WORKSPACE_FILE_CONTENT', payload: { path: string, content: string } }
   | { type: 'SET_BUILD_STATE', payload: Partial<BuildState> }
   // Panel Layout Actions
   | { type: 'SET_PANEL_LAYOUT'; payload: Partial<AppState['panelLayout']> }
@@ -158,7 +159,7 @@ const appReducer = produce((draft: Draft<AppState>, action: Action) => {
         'UNDO', 'REDO', 'FIND_PARENT', 'SET_ACTIVE_PAGE', 'SET_SELECTED_ELEMENT_ID', 'SET_HOVERED_ELEMENT_ID', 'SET_ALT_KEY_PRESSED',
         'SET_EDITING_COMPONENT_ID', 'SET_VIEWPORT', 'SET_CANVAS_WIDTH', 'SET_CANVAS_ZOOM', 'SHOW_MODAL', 'HIDE_MODAL', 'TOGGLE_MODAL',
         'EXECUTE_ACTIONS', 'INITIALIZE_RUNTIME_STATE', 'SET_PAGE_DATA_STATE', 'COPY_STYLES', 'COMMIT_CHANGES', 'UPDATE_CURSORS',
-        'SET_APP_MODE', 'SET_PREVIEW_MODE', 'SET_PANEL_LAYOUT', 'SET_PANELS_STATE', 'SET_WORKSPACE', 'SET_BUILD_STATE'
+        'SET_APP_MODE', 'SET_PREVIEW_MODE', 'SET_PANEL_LAYOUT', 'SET_PANELS_STATE', 'SET_WORKSPACE', 'SET_BUILD_STATE', 'UPDATE_WORKSPACE_FILE_CONTENT'
     ];
 
     if (!nonUndoableActions.includes(action.type)) {
@@ -188,12 +189,38 @@ const appReducer = produce((draft: Draft<AppState>, action: Action) => {
     };
 
     switch (action.type) {
-        case 'SET_WORKSPACE': draft.workspace = action.payload; break;
+        case 'SET_WORKSPACE': draft.workspace = action.payload as Draft<FileNode[]>; break;
+        case 'UPDATE_WORKSPACE_FILE_CONTENT': {
+            const { path, content } = action.payload;
+            const pathParts = path.split('/');
+            
+            const findAndUpdate = (nodes: Draft<FileNode>[], parts: string[]): boolean => {
+                if (!parts.length) return false;
+                const part = parts[0];
+                const remainingParts = parts.slice(1);
+                const node = nodes.find(n => n.name === part);
+                if (!node) return false;
+
+                if (remainingParts.length === 0) {
+                    if (node.type === 'file') {
+                        node.content = content;
+                        return true;
+                    }
+                    return false;
+                }
+                
+                if (node.children) return findAndUpdate(node.children, remainingParts);
+                return false;
+            };
+            
+            findAndUpdate(draft.workspace, pathParts);
+            break;
+        }
         case 'SET_BUILD_STATE': draft.buildState = { ...draft.buildState, ...action.payload }; break;
-        case 'ADD_DATA_SOURCE': draft.dataSources.push(action.payload); break;
+        case 'ADD_DATA_SOURCE': draft.dataSources.push(action.payload as Draft<AnyDataSource>); break;
         case 'UPDATE_DATA_SOURCE': {
             const index = draft.dataSources.findIndex(ds => ds.id === action.payload.id);
-            if (index > -1) draft.dataSources[index] = action.payload;
+            if (index > -1) draft.dataSources[index] = action.payload as Draft<AnyDataSource>;
             break;
         }
         case 'DELETE_DATA_SOURCE': draft.dataSources = draft.dataSources.filter(ds => ds.id !== action.payload) as Draft<AnyDataSource[]>; break;
@@ -208,7 +235,7 @@ const appReducer = produce((draft: Draft<AppState>, action: Action) => {
         case 'UPDATE_PROJECT_NAME': draft.projectName = action.payload; break;
         case 'ADD_PAGE': {
             const newPage: Page = { id: uuidv4(), name: action.payload.name, elements: [], dataState: {}, apiDataSources: [], stateDefinition: [], logicFlows: [] };
-            draft.pages.push(newPage); 
+            draft.pages.push(newPage as Draft<Page>); 
             draft.activePageId = newPage.id;
             break;
         }
@@ -222,7 +249,7 @@ const appReducer = produce((draft: Draft<AppState>, action: Action) => {
             }
             if (draft.pages.length === 0) {
                  const newPage: Page = { id: uuidv4(), name: 'Home', elements: [], dataState: {}, apiDataSources: [], stateDefinition: [], logicFlows: [] };
-                 draft.pages.push(newPage); 
+                 draft.pages.push(newPage as Draft<Page>); 
                  draft.activePageId = newPage.id;
             }
             break;
@@ -236,7 +263,7 @@ const appReducer = produce((draft: Draft<AppState>, action: Action) => {
                     name: `${pageToDuplicate.name} Copy`,
                     elements: (pageToDuplicate.elements as Element[]).map(assignNewIdsToTree)
                 };
-                draft.pages.push(newPage);
+                draft.pages.push(newPage as Draft<Page>);
                 draft.activePageId = newPage.id;
             }
             break;
@@ -257,14 +284,14 @@ const appReducer = produce((draft: Draft<AppState>, action: Action) => {
                 stateDefinition: [],
                 logicFlows: []
             }));
-            draft.pages = newPages;
+            draft.pages = newPages as Draft<Page[]>;
             draft.activePageId = newPages[0]?.id || null;
             draft.selectedElementId = null;
             break;
         }
         case 'SET_ELEMENTS': {
             const page = findActivePage();
-            if (page) page.elements = action.payload;
+            if (page) page.elements = action.payload as Draft<Element[]>;
             break;
         }
         case 'ADD_ELEMENT': {
@@ -292,7 +319,7 @@ const appReducer = produce((draft: Draft<AppState>, action: Action) => {
            if (!element) break;
            const newElement = duplicateElement(element as Element);
            const targetArray = parent ? (parent as Draft<Element>).children : elementTree;
-           targetArray.splice(index + 1, 0, newElement);
+           (targetArray as any[]).splice(index + 1, 0, newElement);
            setElementTree(elementTree);
            break;
         }
@@ -337,7 +364,7 @@ const appReducer = produce((draft: Draft<AppState>, action: Action) => {
             wrapperElement.children = [elementToWrap as Element];
 
             const targetArray = parent ? (parent as Draft<Element>).children : elementTree;
-            targetArray[index] = wrapperElement;
+            (targetArray as any[])[index] = wrapperElement;
 
             setElementTree(elementTree);
             draft.selectedElementId = wrapperElement.id;
@@ -397,13 +424,13 @@ const appReducer = produce((draft: Draft<AppState>, action: Action) => {
             break;
         }
         case 'APPLY_THEME': {
-            const applyStyles = (elements: Element[]) => {
+            const applyStyles = (elements: Draft<Element>[]) => {
                 elements.forEach(el => {
                     if(action.payload[el.type]) el.styles.desktop = { ...el.styles.desktop, ...action.payload[el.type] };
-                    if(el.children) applyStyles(el.children as Element[]);
+                    if(el.children) applyStyles(el.children);
                 });
             }
-            applyStyles(getElementTree());
+            applyStyles(getElementTree() as Draft<Element>[]);
             break;
         }
         case 'UPDATE_THEME': Object.assign(draft.theme, action.payload); break;
@@ -460,8 +487,9 @@ const appReducer = produce((draft: Draft<AppState>, action: Action) => {
         case 'SET_CANVAS_ZOOM': draft.canvasZoom = action.payload; break;
         case 'COPY_STYLES': {
             const { element } = findElementDeep(getElementTree(), action.payload.elementId);
-            if (element) draft.copiedStyles = { styles: element.styles as ResponsiveStyles, tailwindClasses: element.tailwindClasses, className: element.props?.className };
-            toast.success('Styles copied!');
+            if (element) {
+                draft.copiedStyles = { styles: element.styles as ResponsiveStyles, tailwindClasses: element.tailwindClasses, className: element.props?.className };
+            }
             break;
         }
         case 'PASTE_STYLES': {
@@ -775,7 +803,7 @@ export const AppContextProvider: React.FC<{ children: ReactNode; initialProjectS
       }
     ).current;
     
-    const debouncedSaveRef = React.useRef<NodeJS.Timeout>();
+    const debouncedSaveRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
     
     useEffect(() => {
         if(debouncedSaveRef.current) clearTimeout(debouncedSaveRef.current);
@@ -800,4 +828,10 @@ export const AppContextProvider: React.FC<{ children: ReactNode; initialProjectS
     return <AppContext.Provider value={contextValue}>{children}</AppContext.Provider>;
 };
 
-export const useAppContext = () => useContext(AppContext);
+export const useAppContext = () => {
+    const context = useContext(AppContext);
+    if (!context) {
+        throw new Error('useAppContext must be used within an AppContextProvider');
+    }
+    return context;
+};

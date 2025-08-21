@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useAppContext } from '../context/AppContext';
 import { CollapsibleSection } from './StylePropertyEditor';
 import { Plus, Trash2, Database, Network, FolderTree } from 'lucide-react';
-import { AnyDataSource, RestApiDataSource, PostgresDataSource, FirestoreDataSource } from '../types';
+import { AnyDataSource, RestApiDataSource, PostgresDataSource, FirestoreDataSource, DeepReadonly } from '../types';
 import { v4 as uuidv4 } from 'uuid';
 import { toast } from 'react-hot-toast';
 
@@ -103,7 +103,7 @@ export const DataPanel: React.FC = () => {
                            </div>
                            <button onClick={(e) => { e.stopPropagation(); handleDelete(source.id); }} className="text-gray-400 hover:text-red-500"><Trash2 size={14} /></button>
                         </div>
-                        {editingSourceId === source.id && <DataSourceEditor source={source} onUpdate={handleUpdate} onDelete={handleDelete} />}
+                        {editingSourceId === source.id && <DataSourceEditor source={source as AnyDataSource} onUpdate={handleUpdate} onDelete={handleDelete} />}
                     </div>
                 ))}
                 {isAdding ? (

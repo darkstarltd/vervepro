@@ -1,5 +1,6 @@
+
 import React from 'react';
-import { Element, ActionStep, ActionType } from '../types';
+import { Element, ActionStep, ActionType, DeepReadonly } from '../types';
 import { CollapsibleSection } from './StylePropertyEditor';
 import { useAppContext } from '../context/AppContext';
 import { Plus, Trash2, Sparkles } from 'lucide-react';
@@ -28,7 +29,7 @@ export const InteractionsPropertyEditor: React.FC<InteractionsPropertyEditorProp
     const activePage = pages.find(p => p.id === activePageId);
     const stateVariables = activePage?.stateDefinition || [];
     const apiSources = activePage?.apiDataSources || [];
-    const modals = activePage ? findModalsRecursive(activePage.elements) : [];
+    const modals = activePage ? findModalsRecursive(activePage.elements as readonly Element[]) : [];
     const interactions = element.interactions || [];
 
     const handleAddAction = () => {

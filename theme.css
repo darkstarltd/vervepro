@@ -1,3 +1,4 @@
+
 /*
   PROVERVE THEME v2.0
   A polished, professional dark theme for the visual development environment.
@@ -263,17 +264,42 @@ p {
     height: 2px;
 }
 
-
+/* Device Frames */
 .device-frame {
-  border: 12px solid #111; border-radius: 40px; box-shadow: 0 20px 40px rgba(0,0,0,0.5), inset 0 0 0 2px #333;
+  border: 12px solid #111;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.5), inset 0 0 0 2px #333;
   padding: 4px; background: #111; overflow: hidden; display: flex;
   flex-direction: column; position: relative;
+  transition: all 0.3s ease-in-out;
 }
-.device-frame:before {
+.device-frame.portrait { border-radius: 40px; }
+.device-frame.landscape { border-radius: 20px; }
+.device-frame-inner { flex: 1; overflow: hidden; position: relative; }
+.device-frame.portrait .device-frame-inner { border-radius: 28px; }
+.device-frame.landscape .device-frame-inner { border-radius: 12px; }
+
+/* iPhone 14 Pro specific */
+.device-frame.iphone-14-pro.portrait:before {
     content: ''; position: absolute; top: 0px; left: 50%; transform: translateX(-50%);
-    width: 100px; height: 20px; background: #111; border-radius: 0 0 10px 10px; z-index: 10;
+    width: 140px; height: 30px; background: #111; border-radius: 0 0 16px 16px; z-index: 10;
 }
-.device-frame-inner { flex: 1; border-radius: 28px; overflow: hidden; position: relative; }
+.device-frame.iphone-14-pro.landscape:before {
+    content: ''; position: absolute; left: 0px; top: 50%; transform: translateY(-50%);
+    height: 140px; width: 30px; background: #111; border-radius: 0 16px 16px 0; z-index: 10;
+}
+
+/* Pixel 7 specific */
+.device-frame.pixel-7.portrait:before {
+    content: ''; position: absolute; top: 12px; left: 50%; transform: translateX(-50%);
+    width: 10px; height: 10px; background: #222; border-radius: 50%; z-index: 10;
+    box-shadow: 0 0 2px black;
+}
+.device-frame.pixel-7.landscape:before {
+    content: ''; position: absolute; left: 18px; top: 50%; transform: translateY(-50%);
+    width: 10px; height: 10px; background: #222; border-radius: 50%; z-index: 10;
+    box-shadow: 0 0 2px black;
+}
+
 .box-model-editor {
   position: relative; width: 100%; aspect-ratio: 1 / 1;
   border: 1px solid var(--color-border); background: var(--color-surface-light); border-radius: var(--radius-sm);

@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Toaster, toast } from 'react-hot-toast';
 import { AppContextProvider, useAppContext } from './context/AppContext';
-import { ProjectType, Element, CodeSnippet, Asset, DeepPartial, ElementTemplate, ActionStep, PageTemplate, ThemeState } from './types';
+import { ProjectType, Element, CodeSnippet, Asset, DeepPartial, ElementTemplate, ActionStep, PageTemplate, ThemeState, DeepReadonly } from './types';
 import { CinematicEntry } from './components/CinematicEntry';
 import { NewProjectModal } from './components/NewProjectModal';
 import { Header } from './components/Header';
@@ -75,7 +75,7 @@ function AppContent() {
   
   const handleAiRefinement = async (prompt: string) => {
     if (!selectedElementId) return;
-    const { element } = findElementDeep(rootElements, selectedElementId);
+    const { element } = findElementDeep(rootElements as readonly Element[], selectedElementId);
     if (!element) return;
     try {
       const updates: DeepPartial<Element> = await refineElementFromPrompt(prompt, element as Element, projectType);

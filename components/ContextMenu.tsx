@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useAppContext } from '../context/AppContext';
 import { ArrowUp, ArrowDown } from 'lucide-react';
@@ -29,7 +30,10 @@ export const ContextMenu: React.FC<{
         <button onClick={() => handleAction(() => dispatch({ type: 'ADJUST_Z_INDEX', payload: { elementId, direction: 'forward' } }))} className="w-full text-left px-3 py-2 hover:bg-[var(--color-primary)] rounded flex items-center gap-2"><ArrowUp size={16}/> Bring Forward</button>
         <button onClick={() => handleAction(() => dispatch({ type: 'ADJUST_Z_INDEX', payload: { elementId, direction: 'backward' } }))} className="w-full text-left px-3 py-2 hover:bg-[var(--color-primary)] rounded flex items-center gap-2"><ArrowDown size={16}/> Send Backward</button>
         <div className="h-px bg-[var(--color-border)] my-1"></div>
-        <button onClick={() => handleAction(() => dispatch({ type: 'COPY_STYLES', payload: { elementId } }))} className="w-full text-left px-3 py-2 hover:bg-[var(--color-primary)] rounded">Copy Styles</button>
+        <button onClick={() => handleAction(() => {
+            dispatch({ type: 'COPY_STYLES', payload: { elementId } });
+            toast.success('Styles copied!');
+        })} className="w-full text-left px-3 py-2 hover:bg-[var(--color-primary)] rounded">Copy Styles</button>
         <button onClick={() => handleAction(() => dispatch({ type: 'PASTE_STYLES', payload: { elementId } }))} disabled={!copiedStyles} className="w-full text-left px-3 py-2 hover:bg-[var(--color-primary)] rounded disabled:opacity-50 disabled:cursor-not-allowed">Paste Styles</button>
         <div className="h-px bg-[var(--color-border)] my-1"></div>
         <button onClick={() => handleAction(() => {

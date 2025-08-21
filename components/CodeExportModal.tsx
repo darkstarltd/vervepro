@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { generateProjectFiles, generateReactNativeFiles, generateFlutterFiles, generateKotlinFiles } from '../lib/generateCode';
 import { useAppContext } from '../context/AppContext';
+import { Page, CustomComponent, ThemeState, StateVariable, MockApiEndpoint, DeepReadonly } from '../types';
 
 interface CodeExportModalProps {
   onClose: () => void;

@@ -1,9 +1,10 @@
+
 import React, { useState } from 'react';
 import { DragEndEvent, DragOverEvent, DragStartEvent, KeyboardSensor, MouseSensor, TouchSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { sortableKeyboardCoordinates } from '@dnd-kit/sortable';
 import { v4 as uuidv4 } from 'uuid';
 import { useAppContext } from '../context/AppContext';
-import { Element, Template, Asset, CustomComponent, ComponentDefinition } from '../types';
+import { Element, Template, Asset, CustomComponent, ComponentDefinition, DeepReadonly } from '../types';
 import { componentLibrary, createDefaultElement } from '../constants';
 import { TEMPLATES } from '../lib/templates';
 import { findElementDeep } from '../lib/treeUtils';
@@ -49,7 +50,7 @@ export const useDragHandlers = () => {
             return;
         }
 
-        const { element: overElement, parent } = findElementDeep(elementTree, overId);
+        const { element: overElement, parent } = findElementDeep(elementTree as readonly Element[], overId);
         if (!overElement) { setDropIndicator(null); return; }
 
         const isContainer = overElement.children !== undefined || overElement.type === 'slot';
@@ -78,7 +79,7 @@ export const useDragHandlers = () => {
         if (active.data.current?.isAsset) {
             const asset = assets.find(a => a.id === active.data.current?.assetId);
             if (asset) {
-                const imageTemplate = BASE_COMPONENT_LIBRARY.find(c => c.type === 'image')?.defaultElement;
+                const imageTemplate = BASE_COMPONENT_LIBRARY.find(c => c.type === 'image' || c.type === 'Image')?.defaultElement;
                 if (imageTemplate) {
                     const newElement = createDefaultElement({ ...imageTemplate, props: { ...imageTemplate.props, src: asset.url, alt: asset.name } });
                     dispatch({ type: 'ADD_ELEMENT', payload: { parentId: dropIndicator.parentId, index: dropIndicator.index, element: newElement } });
@@ -125,7 +126,7 @@ export const useDragHandlers = () => {
         setDropIndicator(null);
     };
 
-    const { element: activeElement } = activeId ? findElementDeep(elementTree, activeId) : { element: null };
+    const { element: activeElement } = activeId ? findElementDeep(elementTree as readonly Element[], activeId) : { element: null };
     const draggedComponent = activeId && activeId.startsWith('component-') ? BASE_COMPONENT_LIBRARY.find(c => `component-${c.type}` === activeId) : null;
     const draggedCustomComponent = activeId && activeId.startsWith('custom-component-') ? customComponents.find(c => `custom-component-${c.id}` === activeId) : null;
 
@@ -160,7 +161,7 @@ export const useDragHandlers = () => {
           })
         : activeElement
         ? React.createElement(RenderElement, {
-            element: activeElement,
+            element: activeElement as DeepReadonly<Element>,
             isSelected: false,
             isDragOverlay: true,
             onContextMenu: () => {},

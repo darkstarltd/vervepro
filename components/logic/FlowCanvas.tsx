@@ -1,6 +1,8 @@
+
 import React from 'react';
 import { useAppContext } from '../../context/AppContext';
 import { FlowNode } from './FlowNode';
+import { FlowNode as FlowNodeType } from '../../types';
 
 export const FlowCanvas: React.FC = () => {
     const { state } = useAppContext();
@@ -19,7 +21,7 @@ export const FlowCanvas: React.FC = () => {
 
             {/* Render Nodes */}
             {activeFlow ? activeFlow.nodes.map(node => (
-                <FlowNode key={node.id} node={node} />
+                <FlowNode key={node.id} node={node as FlowNodeType} />
             )) : (
                  <div className="flex h-full items-center justify-center text-center text-[var(--color-text-tertiary)]">
                     <div>

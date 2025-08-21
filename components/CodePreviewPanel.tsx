@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { generateHtmlForPage, generateReactNativeFiles, generateFlutterFiles, generateKotlinFiles } from '../lib/generateCode';
 import { useAppContext } from '../context/AppContext';
+import { Page, CustomComponent } from '../types';
 
 export const CodePreviewPanel: React.FC = () => {
   const { state: { pages, activePageId, projectType, customComponents, theme } } = useAppContext();

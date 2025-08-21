@@ -1,4 +1,4 @@
-import { Element, ResponsiveStyles, CustomComponent, DeepReadonly, ComponentSlot } from '../types';
+import { Element, ResponsiveStyles, CustomComponent, DeepReadonly, ComponentSlot, ElementAnimation, ActionStep } from '../types';
 import { v4 as uuidv4 } from 'uuid';
 import { produce } from 'immer';
 
@@ -115,16 +115,16 @@ const replaceSlots = (mainChildren: readonly Element[], instanceChildren: DeepRe
 };
 
 
-export const mergeElements = (main: Element, instance: DeepReadonly<Element>, mainComponentDef: CustomComponent): Element => {
-  return produce(main, draft => {
+export const mergeElements = (main: DeepReadonly<Element>, instance: DeepReadonly<Element>, mainComponentDef: DeepReadonly<CustomComponent>): Element => {
+  return produce(main as Element, draft => {
     draft.id = instance.id;
     draft.componentId = instance.componentId;
     draft.name = instance.name;
     
     draft.styles = {
-        desktop: { ...main.styles.desktop, ...instance.styles.desktop },
-        tablet: { ...main.styles.tablet, ...instance.styles.tablet },
-        mobile: { ...main.styles.mobile, ...instance.styles.mobile },
+        desktop: { ...(main.styles.desktop || {}), ...(instance.styles.desktop || {}) },
+        tablet: { ...(main.styles.tablet || {}), ...(instance.styles.tablet || {}) },
+        mobile: { ...(main.styles.mobile || {}), ...(instance.styles.mobile || {}) },
     };
     
     const defaultProps: { [key: string]: any } = {};
@@ -134,17 +134,17 @@ export const mergeElements = (main: Element, instance: DeepReadonly<Element>, ma
         });
     }
 
-    draft.props = { ...defaultProps, ...main.props, ...instance.props };
+    draft.props = { ...defaultProps, ...(main.props || {}), ...(instance.props || {}) };
     draft.content = instance.content ?? main.content;
     draft.tailwindClasses = instance.tailwindClasses ?? main.tailwindClasses;
-    draft.animations = instance.animations ? JSON.parse(JSON.stringify(instance.animations)) : main.animations;
-    draft.interactions = instance.interactions ? JSON.parse(JSON.stringify(instance.interactions)) : main.interactions;
-    draft.dataSource = instance.dataSource ? JSON.parse(JSON.stringify(instance.dataSource)) : main.dataSource;
+    draft.animations = instance.animations ? JSON.parse(JSON.stringify(instance.animations)) : (main.animations as any);
+    draft.interactions = instance.interactions ? JSON.parse(JSON.stringify(instance.interactions)) : (main.interactions as any);
+    draft.dataSource = instance.dataSource ? JSON.parse(JSON.stringify(instance.dataSource)) : (main.dataSource as any);
     
     // New Slot Logic
     const defaultSlot = mainComponentDef.slots.find(s => s.name === 'Default Slot') || mainComponentDef.slots[0];
     if (draft.children) {
-        draft.children = replaceSlots(draft.children, instance.children, defaultSlot?.id) as any;
+        draft.children = replaceSlots(draft.children, instance.children, defaultSlot?.id);
     }
   });
 };

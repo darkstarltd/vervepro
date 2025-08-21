@@ -1,7 +1,7 @@
 import React from 'react';
-import { MultiplayerCursor } from '../types';
+import { MultiplayerCursor, DeepReadonly } from '../types';
 
-export const MultiplayerCursors: React.FC<{ cursors: MultiplayerCursor[] }> = ({ cursors }) => {
+export const MultiplayerCursors: React.FC<{ cursors: readonly DeepReadonly<MultiplayerCursor>[] }> = ({ cursors }) => {
     return (
         <>
             {cursors.map(cursor => (

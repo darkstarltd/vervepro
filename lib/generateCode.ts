@@ -1,4 +1,7 @@
 
+
+
+
 import { Element, Page, Style, ProjectType, NativeStyle, FlutterStyle, KotlinStyle, CustomComponent, ResponsiveStyles, ThemeState, ApiDataSource, ElementAnimation, DeepReadonly, StateVariable, MockApiEndpoint, LogicFlow } from '../types';
 import { mergeElements } from './treeUtils';
 
@@ -15,7 +18,7 @@ function styleObjectToString(styles?: Readonly<Style>): string {
     }).join('\n');
 }
 
-function generateAnimationCss(animations: readonly ElementAnimation[] | undefined): { keyframes: string, classRules: string[] } {
+function generateAnimationCss(animations: readonly DeepReadonly<ElementAnimation>[] | undefined): { keyframes: string, classRules: string[] } {
     if (!animations || animations.length === 0) {
         return { keyframes: '', classRules: [] };
     }
@@ -59,7 +62,7 @@ function generateAnimationCss(animations: readonly ElementAnimation[] | undefine
     return { keyframes, classRules };
 }
 
-function generateElementCss(element: DeepReadonly<Element>, cssMap: Map<string, string[]>, customComponents: readonly CustomComponent[], theme: DeepReadonly<ThemeState>, animationData: { keyframes: string, classRules: string[] }): void {
+function generateElementCss(element: DeepReadonly<Element>, cssMap: Map<string, string[]>, customComponents: readonly DeepReadonly<CustomComponent>[], theme: DeepReadonly<ThemeState>, animationData: { keyframes: string, classRules: string[] }): void {
   const mainComponent = element.componentId ? customComponents.find(c => c.id === element.componentId) : null;
   const resolvedElement: Element = mainComponent ? mergeElements(mainComponent.mainElement, element, mainComponent) : JSON.parse(JSON.stringify(element));
 
@@ -98,7 +101,7 @@ function generateElementCss(element: DeepReadonly<Element>, cssMap: Map<string, 
   resolvedElement.children?.forEach(child => generateElementCss(child, cssMap, customComponents, theme, animationData));
 }
 
-function generateCssString(pages: readonly Page[], customComponents: readonly CustomComponent[], theme: DeepReadonly<ThemeState>): string {
+function generateCssString(pages: readonly DeepReadonly<Page>[], customComponents: readonly DeepReadonly<CustomComponent>[], theme: DeepReadonly<ThemeState>): string {
   const cssMap = new Map<string, string[]>();
   const animationData = { keyframes: '', classRules: [] };
   
@@ -133,7 +136,7 @@ function generateCssString(pages: readonly Page[], customComponents: readonly Cu
   return cssString + '\n/* --- Animations --- */\n' + animationData.keyframes + '\n' + animationData.classRules.join('\n\n');
 }
 
-function generateElementHtml(element: DeepReadonly<Element>, customComponents: readonly CustomComponent[], indentLevel = 0): string {
+function generateElementHtml(element: DeepReadonly<Element>, customComponents: readonly DeepReadonly<CustomComponent>[], indentLevel = 0): string {
   const mainComponent = element.componentId ? customComponents.find(c => c.id === element.componentId) : null;
   const resolvedElement: Element = mainComponent ? mergeElements(mainComponent.mainElement, element, mainComponent) : JSON.parse(JSON.stringify(element));
 
@@ -178,7 +181,7 @@ function generateElementHtml(element: DeepReadonly<Element>, customComponents: r
   return `${indent}<${Tag} ${attributes}>${childrenHtml}</${Tag}>`;
 }
 
-export function generateHtmlForPage(page: DeepReadonly<Page>, pages: readonly Page[], customComponents: readonly CustomComponent[], theme: DeepReadonly<ThemeState>): string {
+export function generateHtmlForPage(page: DeepReadonly<Page>, pages: readonly DeepReadonly<Page>[], customComponents: readonly DeepReadonly<CustomComponent>[], theme: DeepReadonly<ThemeState>): string {
   const pageTitle = page.name;
   const bodyContent = page.elements.map(el => generateElementHtml(el, customComponents, 2)).join('\n');
   const pageName = page.name.toLowerCase().replace(/\s+/g, '-') + '.html';
@@ -206,10 +209,10 @@ ${bodyContent}
 </html>`;
 }
 
-async function generateJs(pages: readonly Page[], customComponents: readonly CustomComponent[], globalStateDefinition: readonly StateVariable[], mockApiEndpoints: readonly MockApiEndpoint[]): Promise<string> {
+async function generateJs(pages: readonly DeepReadonly<Page>[], customComponents: readonly DeepReadonly<CustomComponent>[], globalStateDefinition: readonly DeepReadonly<StateVariable>[], mockApiEndpoints: readonly DeepReadonly<MockApiEndpoint>[]): Promise<string> {
     const mainPage = pages[0]; // Assume first page is the entry point
     
-    const getInitialValues = (defs: readonly StateVariable[]) => defs.reduce((acc, v) => ({...acc, [v.name]: v.initialValue}), {});
+    const getInitialValues = (defs: readonly DeepReadonly<StateVariable>[]) => defs.reduce((acc, v) => ({...acc, [v.name]: v.initialValue}), {});
 
     const initialGlobalState = getInitialValues(globalStateDefinition);
     const initialPageState = getInitialValues(mainPage.stateDefinition);
@@ -455,7 +458,7 @@ ${flowFunctions}
 });`;
 }
 
-export async function generateProjectFiles(projectName: string, pages: readonly Page[], customComponents: readonly CustomComponent[], theme: DeepReadonly<ThemeState>, globalStateDefinition: readonly StateVariable[], mockApiEndpoints: readonly MockApiEndpoint[]): Promise<{ [fileName: string]: string }> {
+export async function generateProjectFiles(projectName: string, pages: readonly DeepReadonly<Page>[], customComponents: readonly DeepReadonly<CustomComponent>[], theme: DeepReadonly<ThemeState>, globalStateDefinition: readonly DeepReadonly<StateVariable>[], mockApiEndpoints: readonly DeepReadonly<MockApiEndpoint>[]): Promise<{ [fileName: string]: string }> {
   const files: { [fileName: string]: string } = {};
   
   for(const page of pages) {
@@ -496,7 +499,7 @@ function nativeStyleToString(style: DeepReadonly<NativeStyle> | undefined, inden
     return `{\n${styleString}\n${indent}}`;
 }
 
-function generateElementJSX(element: DeepReadonly<Element>, customComponents: readonly CustomComponent[], indentLevel: number): string {
+function generateElementJSX(element: DeepReadonly<Element>, customComponents: readonly DeepReadonly<CustomComponent>[], indentLevel: number): string {
     const mainComponent = element.componentId ? customComponents.find(c => c.id === element.componentId) : null;
     const resolvedElement: Element = mainComponent ? mergeElements(mainComponent.mainElement, element, mainComponent) : JSON.parse(JSON.stringify(element));
     
@@ -528,7 +531,7 @@ function generateElementJSX(element: DeepReadonly<Element>, customComponents: re
     return `${indent}<${Tag} ${attributes}>\n${childrenJsx}\n${indent}</${Tag}>`;
 }
 
-function generateAllStyles(elements: readonly Element[], customComponents: readonly CustomComponent[]): string {
+function generateAllStyles(elements: readonly DeepReadonly<Element>[], customComponents: readonly DeepReadonly<CustomComponent>[]): string {
     let stylesMap: { [key: string]: NativeStyle } = {};
 
     function recurse(el: DeepReadonly<Element>) {
@@ -551,13 +554,13 @@ function generateAllStyles(elements: readonly Element[], customComponents: reado
 }
 
 
-export function generateReactNativeFiles(pages: readonly Page[], customComponents: readonly CustomComponent[], theme: DeepReadonly<ThemeState>): { [fileName: string]: string } { 
+export function generateReactNativeFiles(pages: readonly DeepReadonly<Page>[], customComponents: readonly DeepReadonly<CustomComponent>[], theme: DeepReadonly<ThemeState>): { [fileName: string]: string } { 
     const mainPage = pages[0]; // Assume first page is the entry point
     if (!mainPage) return { 'App.js': '// No pages to generate.' };
 
     const imports = new Set<string>(['React from \'react\'', 'StyleSheet from \'react-native\'', 'View from \'react-native\'']);
     
-    function findImports(elements: readonly Element[]) {
+    function findImports(elements: readonly DeepReadonly<Element>[]) {
         elements.forEach(el => {
             if (el.type !== 'component-instance') {
                 imports.add(el.type);
@@ -619,7 +622,7 @@ function flutterPadding(padding: any): string {
   return `const EdgeInsets.only(top: ${padding.top || padding.vertical || 0}, bottom: ${padding.bottom || padding.vertical || 0}, left: ${padding.left || padding.horizontal || 0}, right: ${padding.right || padding.horizontal || 0},)`;
 }
 
-function generateWidget(element: DeepReadonly<Element>, customComponents: readonly CustomComponent[], indentLevel: number): string {
+function generateWidget(element: DeepReadonly<Element>, customComponents: readonly DeepReadonly<CustomComponent>[], indentLevel: number): string {
   const mainComponent = element.componentId ? customComponents.find(c => c.id === element.componentId) : null;
   const resolvedElement: Element = mainComponent ? mergeElements(mainComponent.mainElement, element, mainComponent) : JSON.parse(JSON.stringify(element));
 
@@ -656,7 +659,7 @@ function generateWidget(element: DeepReadonly<Element>, customComponents: readon
   }
 }
 
-export function generateFlutterFiles(pages: readonly Page[], customComponents: readonly CustomComponent[], theme: DeepReadonly<ThemeState>): { [fileName: string]: string } {
+export function generateFlutterFiles(pages: readonly DeepReadonly<Page>[], customComponents: readonly DeepReadonly<CustomComponent>[], theme: DeepReadonly<ThemeState>): { [fileName: string]: string } {
     const mainPage = pages[0];
     if (!mainPage) return { 'main.dart': '// No pages to generate.' };
 
@@ -712,7 +715,7 @@ ${bodyWidgets}
 }
 
 // --- Kotlin Generation ---
-function generateComposable(element: DeepReadonly<Element>, customComponents: readonly CustomComponent[], indentLevel: number): string {
+function generateComposable(element: DeepReadonly<Element>, customComponents: readonly DeepReadonly<CustomComponent>[], indentLevel: number): string {
     const { type, content, children, props } = element;
     const indent = '  '.repeat(indentLevel);
 
@@ -735,7 +738,7 @@ function generateComposable(element: DeepReadonly<Element>, customComponents: re
     }
 }
 
-export function generateKotlinFiles(pages: readonly Page[], customComponents: readonly CustomComponent[], theme: DeepReadonly<ThemeState>): { [fileName: string]: string } {
+export function generateKotlinFiles(pages: readonly DeepReadonly<Page>[], customComponents: readonly DeepReadonly<CustomComponent>[], theme: DeepReadonly<ThemeState>): { [fileName: string]: string } {
     const mainPage = pages[0];
     if (!mainPage) return { 'Main.kt': '// No pages to generate.' };
     

@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Code, Bot, Zap, Command, Undo, Redo, Share, Settings, Eye, EyeOff, UploadCloud, LayoutDashboard, Workflow, Code2, Hammer } from 'lucide-react';
+import { Code, Bot, Zap, Command, Undo, Redo, Share, Settings, Eye, EyeOff, UploadCloud, LayoutDashboard, Workflow, Code2, Hammer, Rocket } from 'lucide-react';
 import { Tooltip } from './Tooltip';
 import { AppMode } from '../types';
 
@@ -35,7 +35,7 @@ export const Header: React.FC<{
       <div className="flex items-center gap-4">
           <div className="bg-[var(--color-background)] rounded-lg p-1 flex">
             {(['design', 'logic', 'code', 'devtools'] as AppMode[]).map(mode => (
-              <Tooltip key={mode} content={`${mode.charAt(0).toUpperCase() + mode.slice(1)} Mode`}>
+              <Tooltip key={mode} content={`${mode.charAt(0).toUpperCase() + mode.slice(1)} View`}>
                 <button 
                   onClick={() => onModeChange(mode)} 
                   className={`flex items-center gap-2 px-4 py-1.5 text-sm rounded-md transition-colors ${appMode === mode ? 'bg-[var(--color-primary)] text-white' : 'text-[var(--color-text-secondary)] hover:bg-[var(--color-border)]'}`}
@@ -64,6 +64,9 @@ export const Header: React.FC<{
                 </button>
             </Tooltip>
         </div>
+         <button onClick={() => onModeChange('devtools')} className="px-3 py-2 bg-[var(--color-surface-light)] hover:bg-[var(--color-border)] rounded-md text-sm font-semibold flex items-center gap-2">
+            <Rocket size={16} /> Build & Deploy
+        </button>
         <div className="flex -space-x-3 items-center">
             <img className="inline-block h-8 w-8 rounded-full ring-2 ring-[var(--color-surface)]" src="https://i.pravatar.cc/32?img=1" alt="User 1"/>
             <img className="inline-block h-8 w-8 rounded-full ring-2 ring-[var(--color-surface)]" src="https://i.pravatar.cc/32?img=2" alt="User 2"/>

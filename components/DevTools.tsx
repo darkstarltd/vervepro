@@ -1,13 +1,16 @@
+
 import React, { useState, useEffect, FC, KeyboardEvent, useRef } from 'react';
 import { 
     Code, Smartphone, Terminal as TerminalIcon, Hammer, Wrench, Activity, Cpu, Database, Shield,
     Power, AlertTriangle, Download, RefreshCw, Filter, Trash2, Pause, ArrowDown, Play, Save, Eye, Package, Lock, FileText, Folder, File, Wifi, BarChart, Server, Rocket
 } from 'lucide-react';
-import { ApkInfo, BuildTool, DeviceInfo, FileNode, LogEntry, BuildTarget, BuildStatus } from '../types';
+import { ApkInfo, BuildTool, DeviceInfo, FileNode, LogEntry, BuildTarget, BuildStatus, DeepReadonly } from '../types';
 import MonacoEditor from 'react-monaco-editor';
 import { StateInspector } from './StateInspector';
 import { MockApiEditor } from './MockApiEditor';
 import { useAppContext } from '../context/AppContext';
+import { FileTreeView } from './FileTreeView';
+import { toast } from 'react-hot-toast';
 
 // --- MOCK DATA ---
 const MOCK_APK_INFO: ApkInfo = {
@@ -23,23 +26,6 @@ const MOCK_APK_INFO: ApkInfo = {
   receivers: ["BootCompletedReceiver"],
   features: ["android.hardware.camera", "android.hardware.location.gps"],
 };
-
-const MOCK_FILE_TREE: FileNode[] = [
-    { name: 'src', type: 'folder', children: [
-        { name: 'main', type: 'folder', children: [
-            { name: 'java', type: 'folder', children: [
-                { name: 'com', type: 'folder', children: [{ name: 'proverve', type: 'folder', children: [{ name: 'MainActivity.java', type: 'file', content: 'public class MainActivity extends Activity {\n  // ...\n}' }]}] }
-            ]},
-            { name: 'res', type: 'folder', children: [
-                { name: 'layout', type: 'folder', children: [{ name: 'activity_main.xml', type: 'file', content: '<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"\n    android:layout_width="match_parent"\n    android:layout_height="match_parent"\n    android:orientation="vertical" />' }] },
-                { name: 'drawable', type: 'folder', children: [{ name: 'ic_launcher.png', type: 'file' }] }
-            ]},
-            { name: 'AndroidManifest.xml', type: 'file', content: '<manifest xmlns:android="http://schemas.android.com/apk/res/android">\n    <application\n        android:label="@string/app_name">\n    </application>\n</manifest>' }
-        ]}
-    ]},
-    { name: 'build.gradle', type: 'file', content: 'apply plugin: "com.android.application"' },
-    { name: 'preview.html', type: 'file', content: '<h1>Live Preview</h1><p>This is a sample HTML preview.</p><button>Click me!</button>' }
-];
 
 const MOCK_DEVICES: DeviceInfo[] = [
   { id: 'emulator-5554', name: 'Pixel 7 Pro (Emulator)', platform: 'Android', status: 'connected', apiLevel: '33' },
@@ -67,24 +53,6 @@ const generateLog = (): LogEntry => {
         message: messages[Math.floor(Math.random() * messages.length)],
     }
 }
-
-
-// --- Sub-component: File Explorer ---
-const FileExplorer: FC<{ files: readonly FileNode[], onSelect: (file: FileNode) => void, selectedFile: FileNode | null }> = ({ files, onSelect, selectedFile }) => {
-    const renderNode = (node: FileNode, level = 0) => (
-        <div key={node.name} style={{ paddingLeft: `${level * 16}px` }} className="text-sm">
-            <div
-                onClick={() => node.type === 'file' && onSelect(node)}
-                className={`flex items-center gap-2 p-1 rounded-md cursor-pointer ${selectedFile?.name === node.name ? 'bg-[var(--color-primary)]' : 'hover:bg-[var(--color-surface-light)]'}`}
-            >
-                {node.type === 'folder' ? <Folder className="w-4 h-4 text-yellow-400"/> : <File className="w-4 h-4 text-gray-400"/>}
-                <span>{node.name}</span>
-            </div>
-            {node.children && <div className="pl-2 border-l border-gray-700">{node.children.map(child => renderNode(child, level + 1))}</div>}
-        </div>
-    );
-    return <div className="bg-[var(--color-surface)] rounded-lg p-2 h-full overflow-y-auto">{files.map(node => renderNode(node))}</div>;
-};
 
 // --- Sub-component: Performance Chart ---
 const PerformanceChart: FC<{ title: string; icon: React.ReactNode; color: string; unit: string; max: number }> = ({ title, icon, color, unit, max }) => {
@@ -118,31 +86,66 @@ const PerformanceChart: FC<{ title: string; icon: React.ReactNode; color: string
 
 // --- Sub-component: Development View ---
 const DevelopmentView = () => {
-    const [selectedFile, setSelectedFile] = useState<FileNode | null>(MOCK_FILE_TREE.find(f => f.name === 'preview.html') as FileNode);
-    const [code, setCode] = useState(selectedFile?.content || '');
-    useEffect(() => setCode(selectedFile?.content || ''), [selectedFile]);
+    const { state: { workspace }, dispatch } = useAppContext();
+    const [selectedPath, setSelectedPath] = useState<string | null>(null);
+    const [code, setCode] = useState('');
+    
+    const findNodeByPath = (nodes: readonly DeepReadonly<FileNode>[], path: string): DeepReadonly<FileNode> | null => {
+        const parts = path.split('/');
+        let currentNodes: readonly DeepReadonly<FileNode>[] | undefined = nodes;
+        let foundNode: DeepReadonly<FileNode> | null = null;
+        for (const part of parts) {
+            const nextNode = currentNodes?.find(n => n.name === part);
+            if (!nextNode) return null;
+            if (parts.indexOf(part) === parts.length - 1) {
+                foundNode = nextNode;
+            } else {
+                currentNodes = nextNode.children;
+            }
+        }
+        return foundNode;
+    };
+
+    const selectedFileNode = React.useMemo(() => {
+        if (!selectedPath) return null;
+        return findNodeByPath(workspace, selectedPath);
+    }, [workspace, selectedPath]);
+
+    useEffect(() => { setCode(selectedFileNode?.content || ''); }, [selectedFileNode]);
+
+    const handleSelect = (node: DeepReadonly<FileNode> | null, path: string) => {
+        if (node?.type === 'file') {
+            setSelectedPath(path);
+        } else {
+            setSelectedPath(null);
+        }
+    };
+
+    const handleSave = () => {
+        if(selectedPath && selectedFileNode) {
+            dispatch({ type: 'UPDATE_WORKSPACE_FILE_CONTENT', payload: { path: selectedPath, content: code } });
+            toast.success(`${selectedFileNode.name} saved!`);
+        }
+    }
 
     return (
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 h-full">
-            <div className="md:col-span-1 h-full"><FileExplorer files={MOCK_FILE_TREE} onSelect={setSelectedFile} selectedFile={selectedFile} /></div>
-            <div className="md:col-span-2 h-full bg-[var(--color-surface)] rounded-lg overflow-hidden">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 h-full">
+            <div className="md:col-span-1 h-full bg-[var(--color-surface)] rounded-lg p-2 overflow-y-auto"><FileTreeView nodes={workspace} onSelect={handleSelect} selectedPath={selectedPath} /></div>
+            <div className="md:col-span-2 h-full bg-[var(--color-surface)] rounded-lg overflow-hidden flex flex-col">
+                <div className="flex-shrink-0 p-2 border-b border-[var(--color-border)] flex justify-between items-center">
+                    <span className="font-mono text-sm">{selectedPath || 'No file selected'}</span>
+                    <button onClick={handleSave} disabled={!selectedFileNode} className="flex items-center gap-2 text-sm px-3 py-1 bg-[var(--color-surface-light)] hover:bg-[var(--color-border)] rounded-md disabled:opacity-50"><Save size={14}/> Save</button>
+                </div>
+                <div className="flex-1 relative">
                 <MonacoEditor
                     height="100%"
-                    language={selectedFile?.name.endsWith('.java') ? 'java' : selectedFile?.name.endsWith('.xml') ? 'xml' : 'html'}
+                    language={selectedFileNode?.name.endsWith('.java') ? 'java' : selectedFileNode?.name.endsWith('.xml') ? 'xml' : 'html'}
                     theme="vs-dark"
                     value={code}
                     onChange={setCode}
                     options={{ minimap: { enabled: false }, automaticLayout: true, scrollBeyondLastLine: false }}
                 />
-            </div>
-            <div className="md:col-span-1 h-full bg-white rounded-lg overflow-hidden">
-                {selectedFile?.name.endsWith('.html') ? (
-                    <iframe srcDoc={code} title="Preview" className="w-full h-full border-0" />
-                ) : (
-                    <div className="flex items-center justify-center h-full text-gray-500 bg-gray-100">
-                        <p>No preview available</p>
-                    </div>
-                )}
+                </div>
             </div>
         </div>
     );
@@ -194,7 +197,7 @@ const APKAnalyzer = () => {
                 </div>
             );
             case 'manifest': return (
-                <pre className="text-xs bg-[var(--color-surface)] p-2 rounded-md max-h-48 overflow-auto"><code>{MOCK_FILE_TREE.find(f=>f.name==='src')?.children?.[0].children?.[2].content}</code></pre>
+                <pre className="text-xs bg-[var(--color-surface)] p-2 rounded-md max-h-48 overflow-auto"><code>Placeholder for AndroidManifest.xml</code></pre>
             );
         }
     };
@@ -406,17 +409,17 @@ const BuildDeploy = () => {
 };
 
 // --- Main DevTools Component ---
-type TabId = 'dev' | 'apk' | 'devices' | 'perf' | 'build' | 'state' | 'api';
+type TabId = 'build' | 'dev' | 'apk' | 'devices' | 'perf' | 'tools' | 'state' | 'api';
 export const DevTools: FC = () => {
     const [activeTab, setActiveTab] = useState<TabId>('build');
 
     const tabs: { id: TabId, name: string, icon: React.ReactNode }[] = [
         { id: 'build', name: 'Build', icon: <Rocket size={20} /> },
-        { id: 'dev', name: 'Development', icon: <Code size={20} /> },
+        { id: 'dev', name: 'Code', icon: <Code size={20} /> },
         { id: 'apk', name: 'APK Analysis', icon: <Package size={20} /> },
         { id: 'devices', name: 'Devices & Logs', icon: <Smartphone size={20} /> },
         { id: 'perf', name: 'Performance', icon: <Activity size={20} /> },
-        { id: 'build', name: 'Build Tools', icon: <Hammer size={20} /> },
+        { id: 'tools', name: 'Build Tools', icon: <Hammer size={20} /> },
         { id: 'state', name: 'State', icon: <BarChart size={20} /> },
         { id: 'api', name: 'Mock API', icon: <Server size={20} /> },
     ];
@@ -444,7 +447,7 @@ export const DevTools: FC = () => {
                     </div>
                 </div>
             );
-            case 'build': return <BuildToolsManager />;
+            case 'tools': return <BuildToolsManager />;
             case 'state': return <StateInspector />;
             case 'api': return <MockApiEditor />;
         }

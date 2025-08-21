@@ -35,7 +35,7 @@ const TailwindPropertyEditor: React.FC<{element: DeepReadonly<Element>}> = ({ el
     );
 };
 
-const VariantSelector: React.FC<{ element: DeepReadonly<Element>, componentDef: CustomComponent }> = ({ element, componentDef }) => {
+const VariantSelector: React.FC<{ element: DeepReadonly<Element>, componentDef: DeepReadonly<CustomComponent> }> = ({ element, componentDef }) => {
     const { updateElement } = useAppContext();
     
     const handleVariantChange = (propertyId: string, optionId: string) => {
@@ -109,7 +109,7 @@ const ConditionalDisplayEditor: React.FC<{element: DeepReadonly<Element>}> = ({ 
     )
 }
 
-const SlotTargetEditor: React.FC<{ element: DeepReadonly<Element>, parentComponentDef: CustomComponent }> = ({ element, parentComponentDef }) => {
+const SlotTargetEditor: React.FC<{ element: DeepReadonly<Element>, parentComponentDef: DeepReadonly<CustomComponent> }> = ({ element, parentComponentDef }) => {
     const { updateElement } = useAppContext();
     const slots = parentComponentDef.slots || [];
     if (slots.length === 0) return null;
@@ -136,7 +136,7 @@ type PropertiesTab = 'style' | 'interactions' | 'animations';
 export const PropertiesPanel: React.FC<{ 
     onAiRefine: () => void;
     onAiInteraction: () => void;
-    parentElement: Element | null;
+    parentElement: DeepReadonly<Element> | null;
 }> = ({ onAiRefine, onAiInteraction, parentElement }) => {
   const { state, updateElement, dispatch } = useAppContext();
   const { pages, activePageId, selectedElementId, projectType, customComponents, editingComponentId, codeSnippets, panels } = state;
@@ -145,7 +145,7 @@ export const PropertiesPanel: React.FC<{
   const editingComponent = editingComponentId ? customComponents.find(c => c.id === editingComponentId) : null;
   const activePage = pages.find(p => p.id === activePageId) || pages[0];
   const elementTree = editingComponent ? [editingComponent.mainElement] : (activePage?.elements || []);
-  const { element: selectedElement } = findElementDeep(elementTree, selectedElementId || '');
+  const { element: selectedElement } = findElementDeep(elementTree as readonly Element[], selectedElementId || '');
   
   const mainComponentDef = selectedElement?.componentId ? customComponents.find(c => c.id === selectedElement.componentId) : null;
   const parentComponentDef = parentElement?.componentId ? customComponents.find(c => c.id === parentElement.componentId) : null;
@@ -254,7 +254,7 @@ export const PropertiesPanel: React.FC<{
                   <button onClick={() => dispatch({type: 'SET_EDITING_COMPONENT_ID', payload: mainComponentDef.id })} className="w-full text-sm text-center p-2 bg-[var(--color-surface-light)] hover:bg-[var(--color-border)] rounded-md">Edit Main Component</button>
                 </CollapsibleSection> )}
                 {mainComponentDef && <VariantSelector element={selectedElement} componentDef={mainComponentDef} />}
-                {parentComponentDef && <SlotTargetEditor element={selectedElement} parentComponentDef={parentComponentDef} />}
+                {parentComponentDef && <SlotTargetEditor element={selectedElement} parentComponentDef={parentComponentDef as CustomComponent} />}
                 {isCustomCode && (
                     <CollapsibleSection title="Code Snippet" defaultOpen>
                         <div className="bg-[var(--color-surface-light)] p-3 rounded-lg text-sm">
@@ -270,7 +270,7 @@ export const PropertiesPanel: React.FC<{
                     <AiContentGenerator onGenerated={(text) => updateElement(selectedElement.id, { content: text })} currentContent={selectedElement.content || ''} />
                   </div>
                 </div> )}
-                {isIcon && <IconPicker selectedElement={selectedElement} />}
+                {isIcon && <IconPicker selectedElement={selectedElement as Element} />}
                 {isFormElement && ( <CollapsibleSection title="Input Properties" defaultOpen>
                     <div className="space-y-3">
                       <div>
@@ -279,23 +279,23 @@ export const PropertiesPanel: React.FC<{
                       </div>
                     </div>
                 </CollapsibleSection> )}
-                {isImage && <ImagePropertyEditor selectedElement={selectedElement} onPropChange={(prop, val) => updateElement(selectedElement.id, { props: {...selectedElement.props, [prop]: val}})} />}
+                {isImage && <ImagePropertyEditor selectedElement={selectedElement as Element} onPropChange={(prop, val) => updateElement(selectedElement.id, { props: {...selectedElement.props, [prop]: val}})} />}
                 
-                <DataBindingEditor element={selectedElement} />
+                <DataBindingEditor element={selectedElement as Element} />
                 <ConditionalDisplayEditor element={selectedElement} />
-                <AiStyleAssistant element={selectedElement} onStylesGenerated={handleAiStylesGenerated} stylingMode={projectType === 'web' ? 'tailwind' : 'css'} />
-                {projectType === 'web' && ( <> <CollapsibleSection title="Global Classes" defaultOpen><GlobalClassSelector element={selectedElement} /></CollapsibleSection><TailwindPropertyEditor element={selectedElement} /></> )}
+                <AiStyleAssistant element={selectedElement as Element} onStylesGenerated={handleAiStylesGenerated} stylingMode={projectType === 'web' ? 'tailwind' : 'css'} />
+                {projectType === 'web' && ( <> <CollapsibleSection title="Global Classes" defaultOpen><GlobalClassSelector element={selectedElement as Element} /></CollapsibleSection><TailwindPropertyEditor element={selectedElement} /></> )}
                 <StylePropertyEditor 
                     element={selectedElement} 
                     onStyleChange={handleStyleChange} 
                     onAiResponsiveGenerated={handleAiResponsiveStylesGenerated}
-                    parentElement={parentElement} 
+                    parentElement={parentElement as Element | null} 
                     mainComponentDef={mainComponentDef}
                 />
             </>
         )}
-        {activeTab === 'interactions' && <InteractionsPropertyEditor element={selectedElement} onUpdate={(interactions) => updateElement(selectedElement.id, { interactions })} onAiInteraction={onAiInteraction} />}
-        {activeTab === 'animations' && projectType === 'web' && <AnimationPropertyEditor element={selectedElement} />}
+        {activeTab === 'interactions' && <InteractionsPropertyEditor element={selectedElement as Element} onUpdate={(interactions) => updateElement(selectedElement.id, { interactions })} onAiInteraction={onAiInteraction} />}
+        {activeTab === 'animations' && projectType === 'web' && <AnimationPropertyEditor element={selectedElement as Element} />}
       </div>
     </aside>
   );

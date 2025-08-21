@@ -1,38 +1,38 @@
-import React, { useRef, useCallback, useEffect } from 'react';
+import React, { useRef, useCallback, useEffect, useState } from 'react';
 import { useDroppable } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { RenderElement } from './RenderElement';
 import { useAppContext } from '../context/AppContext';
 import { Element, DeepReadonly, MultiplayerCursor } from '../types';
-import { MousePointer, X } from 'lucide-react';
+import { MousePointer, X, Smartphone, Tablet, Monitor, RotateCcw } from 'lucide-react';
 import { MultiplayerCursors } from './MultiplayerCursors';
 
 interface CanvasProps {
-  elements: readonly Element[];
+  elements: readonly DeepReadonly<Element>[];
   dropIndicator: { parentId: string | null; index: number } | null;
   onContextMenu: (e: React.MouseEvent, elementId: string) => void;
   mode: 'edit' | 'preview';
-  cursors: readonly MultiplayerCursor[];
+  cursors: readonly DeepReadonly<MultiplayerCursor>[];
 }
 
-const findAllElementsOfType = (elements: readonly Element[], type: string): readonly Element[] => {
-  let found: Element[] = [];
+const findAllElementsOfType = (elements: readonly DeepReadonly<Element>[], type: string): DeepReadonly<Element>[] => {
+  let found: DeepReadonly<Element>[] = [];
   for (const element of elements) {
-    if (element.type === type) found.push(element as Element);
-    if (element.children) found = [...found, ...findAllElementsOfType(element.children, type) as Element[]];
+    if (element.type === type) found.push(element);
+    if (element.children) found = [...found, ...findAllElementsOfType(element.children, type)];
   }
   return found;
 };
-const filterOutElementsOfType = (elements: readonly Element[], type: string): Element[] => {
+const filterOutElementsOfType = (elements: readonly DeepReadonly<Element>[], type: string): DeepReadonly<Element>[] => {
   return elements.reduce((acc, element) => {
     if (element.type === type) return acc;
-    if (element.children) {
-      acc.push({ ...element, children: filterOutElementsOfType(element.children, type) } as Element);
-    } else {
-      acc.push(element as Element);
+    const newElement: Element = JSON.parse(JSON.stringify(element));
+    if (newElement.children) {
+      newElement.children = filterOutElementsOfType(newElement.children, type) as Element[];
     }
+    acc.push(newElement);
     return acc;
-  }, [] as Element[]);
+  }, [] as DeepReadonly<Element>[]);
 };
 
 const DropIndicator = () => <div className="drop-indicator" />;
@@ -86,11 +86,27 @@ const CanvasContent: React.FC<Omit<CanvasProps, 'cursors'>> = ({ elements, dropI
     );
 };
 
+const DevicePreviewControls: React.FC<{
+    device: string; setDevice: (d: string) => void;
+    orientation: 'portrait' | 'landscape'; setOrientation: (orientation: 'portrait' | 'landscape' | ((prev: 'portrait' | 'landscape') => 'portrait' | 'landscape')) => void;
+}> = ({ device, setDevice, orientation, setOrientation }) => {
+    return (
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-full bg-[var(--color-surface)] p-1 rounded-t-lg border-b-0 border border-[var(--color-border)] flex items-center gap-2">
+            <button onClick={() => setDevice('iphone-14-pro')} className={`px-2 py-1 text-xs rounded ${device === 'iphone-14-pro' ? 'bg-[var(--color-primary)]' : 'hover:bg-[var(--color-border)]'}`}><Smartphone size={14}/></button>
+            <button onClick={() => setDevice('pixel-7')} className={`px-2 py-1 text-xs rounded ${device === 'pixel-7' ? 'bg-[var(--color-primary)]' : 'hover:bg-[var(--color-border)]'}`}><Smartphone size={14}/></button>
+            <div className="w-px h-4 bg-[var(--color-border)] mx-1" />
+            <button onClick={() => setOrientation(o => o === 'portrait' ? 'landscape' : 'portrait')} className="p-1.5 hover:bg-[var(--color-border)] rounded"><RotateCcw size={14}/></button>
+        </div>
+    );
+};
 
 export const Canvas: React.FC<CanvasProps> = ({ elements, dropIndicator, onContextMenu, mode, cursors }) => {
   const { state, setSelectedElementId, dispatch } = useAppContext();
   const { viewport, projectType, editingComponentId, customComponents, canvasWidth, canvasZoom } = state;
   const canvasContainerRef = useRef<HTMLDivElement>(null);
+  
+  const [device, setDevice] = useState('iphone-14-pro');
+  const [orientation, setOrientation] = useState<'portrait' | 'landscape'>('portrait');
 
   const editingComponent = editingComponentId ? customComponents.find(c => c.id === editingComponentId) : null;
   const isResizable = projectType === 'web' && !editingComponent && mode === 'edit';
@@ -146,12 +162,18 @@ export const Canvas: React.FC<CanvasProps> = ({ elements, dropIndicator, onConte
   };
 
   const isMobilePlatform = projectType === 'native' || projectType === 'flutter' || projectType === 'kotlin';
-  const finalCanvasWidth = isResizable ? `${canvasWidth}px` : (isMobilePlatform ? '390px' : '100%');
-  const canvasHeight = isMobilePlatform ? '844px' : '100%';
+  
+  const deviceDimensions = {
+      'iphone-14-pro': { portrait: { w: '393px', h: '852px' }, landscape: { w: '852px', h: '393px' }},
+      'pixel-7': { portrait: { w: '412px', h: '915px' }, landscape: { w: '915px', h: '412px' }}
+  };
+  
+  const finalCanvasWidth = isResizable ? `${canvasWidth}px` : (isMobilePlatform ? deviceDimensions[device as keyof typeof deviceDimensions][orientation].w : '100%');
+  const canvasHeight = isMobilePlatform ? deviceDimensions[device as keyof typeof deviceDimensions][orientation].h : '100%';
 
   return (
     <div className={`flex-1 p-8 overflow-auto bg-gray-900 flex justify-center items-start relative ${mode === 'preview' ? 'p-0' : ''}`} onClick={handleClick}>
-       <MultiplayerCursors cursors={cursors as MultiplayerCursor[]} />
+       <MultiplayerCursors cursors={cursors} />
        <div 
         style={{ 
           transform: `scale(${canvasZoom})`,
@@ -162,9 +184,11 @@ export const Canvas: React.FC<CanvasProps> = ({ elements, dropIndicator, onConte
       >
         <div 
           ref={canvasContainerRef}
-          className="relative"
+          className="relative transition-all duration-300"
+          style={{ width: finalCanvasWidth, height: canvasHeight }}
         >
-          <div style={{ width: finalCanvasWidth, height: canvasHeight }} className={`ease-in-out ${isResizable ? '' : 'transition-all duration-300'} ${isMobilePlatform ? '' : 'w-full'} flex flex-col`}>
+            {isMobilePlatform && mode === 'edit' && <DevicePreviewControls device={device} setDevice={setDevice} orientation={orientation} setOrientation={setOrientation}/>}
+          <div className="w-full h-full flex flex-col">
               {editingComponent && (
                 <div className="flex-shrink-0 bg-[var(--color-surface)] p-2 rounded-t-lg border-b-2 border-[var(--color-primary)] flex justify-between items-center text-sm">
                     <span className="font-semibold">Editing Component: <span className="text-[var(--color-primary)]">{editingComponent.name}</span></span>
@@ -172,13 +196,13 @@ export const Canvas: React.FC<CanvasProps> = ({ elements, dropIndicator, onConte
                         onClick={() => dispatch({ type: 'SET_EDITING_COMPONENT_ID', payload: null })}
                         className="flex items-center gap-1 text-xs px-2 py-1 bg-[var(--color-surface-light)] hover:bg-[var(--color-border)] rounded-md"
                     >
-                       <X /> Return to Page
+                       <X size={12}/> Return to Page
                     </button>
                 </div>
               )}
               {isMobilePlatform ? (
-                  <div className={`device-frame flex-1 ${editingComponent ? 'rounded-t-none' : ''}`}>
-                      <div className={`device-frame-inner bg-white ${editingComponent ? 'rounded-t-none' : ''} transition-width duration-300`}>
+                  <div className={`device-frame flex-1 ${device} ${orientation} ${editingComponent ? 'rounded-t-none' : ''}`}>
+                      <div className={`device-frame-inner bg-white ${editingComponent ? 'rounded-t-none' : ''}`}>
                           <CanvasContent elements={elements} dropIndicator={dropIndicator} mode={mode} onContextMenu={onContextMenu}/>
                       </div>
                   </div>

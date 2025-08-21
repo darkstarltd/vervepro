@@ -10,6 +10,8 @@ import { GripVertical, Copy, Trash2, Lock, EyeOff } from 'lucide-react';
 import { mergeElements } from '../lib/treeUtils';
 import { Icon } from './Icon';
 import { toast } from 'react-hot-toast';
+import { v4 as uuidv4 } from 'uuid';
+import { produce } from 'immer';
 
 const nativeStyleToCss = (style: NativeStyle): React.CSSProperties => {
     const cssStyle: any = {};
@@ -41,7 +43,7 @@ const ElementChrome: React.FC<{ element: DeepReadonly<Element>; listeners: any; 
   return (
     <div className="element-chrome">
       <div className="element-chrome-toolbar">
-        <span {...listeners} className="element-chrome-drag-handle flex items-center gap-1"><GripVertical />{element.name}</span>
+        <span {...listeners} className="element-chrome-drag-handle flex items-center gap-1"><GripVertical size={12}/>{element.name}</span>
         <div className="element-chrome-actions">
           <button onClick={(e) => { e.stopPropagation(); dispatch({ type: 'DUPLICATE_ELEMENT', payload: { elementId: element.id } }) }} title="Duplicate"><Copy size={14} /></button>
           <button onClick={(e) => { e.stopPropagation(); dispatch({ type: 'DELETE_ELEMENT', payload: { elementId: element.id } }) }} className="hover:text-[var(--color-danger-hover)]" title="Delete"><Trash2 size={14} /></button>
@@ -94,7 +96,14 @@ const RenderElementComponent: React.FC<RenderElementProps> = ({ element: instanc
   const elementRef = useRef<HTMLDivElement>(null);
 
   const mainComponent = useMemo(() => instanceElement.componentId ? customComponents.find(c => c.id === instanceElement.componentId) : null, [instanceElement.componentId, customComponents]);
-  const element = useMemo(() => mainComponent ? mergeElements(mainComponent.mainElement, instanceElement, mainComponent) : instanceElement, [instanceElement, mainComponent]);
+  
+  const element = useMemo(() => {
+    if (mainComponent) {
+        return mergeElements(mainComponent.mainElement, instanceElement, mainComponent);
+    }
+    // Deep clone to make it mutable for local operations if needed, preventing issues with readonly state
+    return produce(instanceElement, draft => {});
+  }, [instanceElement, mainComponent]);
 
   const { id, type, content, props, styles, children, animations, interactions, tailwindClasses, dataSource, conditionalDisplay, snippetId, isLocked, isHidden } = element;
   
@@ -142,7 +151,7 @@ const RenderElementComponent: React.FC<RenderElementProps> = ({ element: instanc
     return scope;
   }, [runtimeState, activePage?.dataState, dataScope, mainComponent, instanceElement.props]);
 
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: instanceElement.id, data: { type: 'element', element: instanceElement }, disabled: isDragOverlay || isEditing || mode === 'preview' || isLocked });
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: instanceElement.id, data: { type: 'element' }, disabled: isDragOverlay || isEditing || mode === 'preview' || isLocked });
   const isContainer = children !== undefined || type === 'slot';
   const { setNodeRef: droppableNodeRef, isOver } = useDroppable({ id: instanceElement.id, disabled: !isContainer || isDragOverlay || isLocked });
 
@@ -293,9 +302,14 @@ const RenderElementComponent: React.FC<RenderElementProps> = ({ element: instanc
 
     return dataArray.map((item, index) => {
         const itemScope = { ...currentScope, [itemName]: item, index };
-        return children?.map(child => (
-            <RenderElement key={`${child.id}-${index}`} element={{...child, id: `${child.id}-${index}`}} isSelected={false} onContextMenu={onContextMenu} isDragOverlay={isDragOverlay} dropIndicator={dropIndicator} dataScope={itemScope} mode={mode}/>
-        ));
+        return children?.map(child => {
+            const mutableChild = produce(child, draft => {
+              draft.id = `${child.id}-${(item as any).id || index}`; 
+            });
+            return (
+                <RenderElement key={mutableChild.id} element={mutableChild} isSelected={false} onContextMenu={onContextMenu} isDragOverlay={isDragOverlay} dropIndicator={dropIndicator} dataScope={itemScope} mode={mode}/>
+            );
+        });
     });
   };
   

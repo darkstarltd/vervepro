@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { DndContext, DragOverlay } from '@dnd-kit/core';
 
-import { Element, MultiplayerCursor } from '../types';
+import { Element, MultiplayerCursor, DeepReadonly } from '../types';
 import { findElementDeep, findElementPath, findParentElement } from '../lib/treeUtils';
 
 import { useAppContext } from '../context/AppContext';
@@ -10,7 +10,7 @@ import { Sidebar } from './Sidebar';
 import { Canvas } from './Canvas';
 import { PropertiesPanel } from './PropertiesPanel';
 import { CodePreviewPanel } from './CodePreviewPanel';
-import { ActivityBar } from './ActivityBar';
+import { ActivityBar, ActivityBarTab } from './ActivityBar';
 import { StatusBar } from './StatusBar';
 import { TerminalPanel } from './TerminalPanel';
 import { MeasurementGuides } from './MeasurementGuides';
@@ -28,8 +28,8 @@ const Resizer: React.FC<{ onMouseDown: (e: React.MouseEvent) => void, vertical?:
 };
 
 export function DesignView({ openModal }: { openModal: (modal: string, context?: any) => void }) {
-  const { state, dispatch, setSelectedElementId, setPreviewMode } = useAppContext();
-  const { pages, activePageId, projectType, selectedElementId, customComponents, editingComponentId, theme, codeSnippets, hoveredElementId, altKeyPressed, multiplayerCursors, previewMode, panelLayout, panels } = state;
+  const { state, dispatch, setSelectedElementId } = useAppContext();
+  const { pages, activePageId, projectType, selectedElementId, customComponents, editingComponentId, theme, hoveredElementId, altKeyPressed, multiplayerCursors, previewMode, panelLayout, panels } = state;
   
   const [resizingPanel, setResizingPanel] = useState<'left' | 'right' | 'bottom' | null>(null);
   
@@ -76,148 +76,141 @@ export function DesignView({ openModal }: { openModal: (modal: string, context?:
         styleEl.id = styleId;
         document.head.appendChild(styleEl);
     }
-    const cssString = Object.entries(theme.globalClasses)
-      .map(([className, styles]) => `.${className} {\n${styleObjectToString(styles as any)}\n}`)
-      .join('\n');
+    const cssString = Object.entries(theme.globalClasses).map(([className, styles]) => `.${className} {\n${styleObjectToString(styles)}\n}`).join('\n\n');
     styleEl.innerHTML = cssString;
   }, [theme.globalClasses, projectType]);
 
-  const [activeSidebarTab, setActiveSidebarTab] = useState<any>('explorer');
-
-  const activePage = pages.find(p => p.id === activePageId) || pages[0];
-  const editingComponent = editingComponentId ? customComponents.find(c => c.id === editingComponentId) : null;
-  const rootElements = editingComponent ? [editingComponent.mainElement] : (activePage?.elements || []);
+  const [activeTab, setActiveTab] = useState<ActivityBarTab>('layers');
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number; elementId: string; } | null>(null);
   
   const { sensors, handleDragStart, handleDragOver, handleDragEnd, draggedItemOverlay, dropIndicator } = useDragHandlers();
-
-    const createResizeHandler = useCallback((panel: 'left' | 'right' | 'bottom') => (mouseDownEvent: React.MouseEvent) => {
-        mouseDownEvent.preventDefault();
-        setResizingPanel(panel);
-        document.body.style.cursor = panel === 'bottom' ? 'ns-resize' : 'ew-resize';
-        const startSize = panel === 'left' ? panelLayout.leftSize : panel === 'right' ? panelLayout.rightSize : panelLayout.bottomSize;
-        const startPosition = panel === 'bottom' ? mouseDownEvent.clientY : mouseDownEvent.clientX;
-
-        const handleMouseMove = (moveEvent: MouseEvent) => {
-            const delta = panel === 'bottom' ? startPosition - moveEvent.clientY : moveEvent.clientX - startPosition;
-            const newSize = panel === 'right' ? startSize - delta : startSize + delta;
-            
-            const clamp = (value: number, min: number, max: number) => Math.max(min, Math.min(value, max));
-
-            let sizeKey: 'leftSize' | 'rightSize' | 'bottomSize';
-            let minSize: number, maxSize: number;
-
-            if(panel === 'left') { sizeKey = 'leftSize'; minSize = 200; maxSize = 500; }
-            else if (panel === 'right') { sizeKey = 'rightSize'; minSize = 250; maxSize = 600; }
-            else { sizeKey = 'bottomSize'; minSize = 100; maxSize = window.innerHeight - 200; }
-            
-            dispatch({ type: 'SET_PANEL_LAYOUT', payload: { [sizeKey]: clamp(newSize, minSize, maxSize) }});
-        };
-        const handleMouseUp = () => {
-            setResizingPanel(null);
-            document.body.style.cursor = '';
-            window.removeEventListener('mousemove', handleMouseMove);
-            window.removeEventListener('mouseup', handleMouseUp);
-        };
-        window.addEventListener('mousemove', handleMouseMove);
-        window.addEventListener('mouseup', handleMouseUp);
-    }, [dispatch, panelLayout]);
-
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => { if (e.key === 'Alt' && !altKeyPressed) dispatch({ type: 'SET_ALT_KEY_PRESSED', payload: true }); };
-    const handleKeyUp = (e: KeyboardEvent) => { if (e.key === 'Alt') dispatch({ type: 'SET_ALT_KEY_PRESSED', payload: false }); };
-    window.addEventListener('keydown', handleKeyDown);
-    window.addEventListener('keyup', handleKeyUp);
-    return () => { window.removeEventListener('keydown', handleKeyDown); window.removeEventListener('keyup', handleKeyUp); };
-  }, [altKeyPressed, dispatch]);
-
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
-      const isModifier = isMac ? e.metaKey : e.ctrlKey;
-
-      if (isModifier && e.key === 'd') { e.preventDefault(); if (selectedElementId) dispatch({ type: 'DUPLICATE_ELEMENT', payload: { elementId: selectedElementId }}); } 
-      else if (isModifier && e.key === 'k') { e.preventDefault(); openModal('commandPalette'); } 
-      else if (e.key === 'Escape' && previewMode) setPreviewMode(false);
-      else if (e.key === 'Delete' || e.key === 'Backspace') {
-        if (selectedElementId) {
-            const target = e.target as HTMLElement;
-            if (target.tagName !== 'INPUT' && target.tagName !== 'TEXTAREA' && !target.isContentEditable) {
-                e.preventDefault();
-                dispatch({ type: 'DELETE_ELEMENT', payload: { elementId: selectedElementId } });
-            }
-        }
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [selectedElementId, dispatch, previewMode, setPreviewMode, openModal]);
   
-  const [contextMenu, setContextMenu] = useState<{ x: number; y: number; elementId: string } | null>(null);
+  const editingComponent = editingComponentId ? customComponents.find(c => c.id === editingComponentId) : null;
+  const activePage = pages.find(p => p.id === activePageId);
+  const elementTree = editingComponent ? [editingComponent.mainElement] : (activePage?.elements || []);
+  const selectedElementPath = selectedElementId ? findElementPath(elementTree as readonly Element[], selectedElementId) : undefined;
+  const { element: hoveredElement } = hoveredElementId ? findElementDeep(elementTree as readonly Element[], hoveredElementId) : { element: null };
+  const { element: selectedElement } = selectedElementId ? findElementDeep(elementTree as readonly Element[], selectedElementId) : { element: null };
 
   const handleContextMenu = (e: React.MouseEvent, elementId: string) => {
-    e.preventDefault(); e.stopPropagation();
-    setSelectedElementId(elementId);
+    e.preventDefault();
     setContextMenu({ x: e.clientX, y: e.clientY, elementId });
   };
   
-  const selectedElementPath = selectedElementId ? findElementPath(rootElements, selectedElementId) : [];
-  const selectedElement = selectedElementPath.length > 0 ? selectedElementPath[selectedElementPath.length - 1] : null;
-  const selectedElementParent = selectedElementId ? findParentElement(rootElements, selectedElementId) : null;
-  const { element: hoveredElement } = hoveredElementId ? findElementDeep(rootElements, hoveredElementId) : { element: null };
+  const handlePanelResize = useCallback((e: React.MouseEvent, panel: 'left' | 'right' | 'bottom') => {
+    e.preventDefault();
+    setResizingPanel(panel);
+    
+    const startX = e.clientX;
+    const startY = e.clientY;
+    const startSizes = { ...panelLayout };
 
-  const renderBottomPanel = () => {
-    if (panels.bottomActivePanel === 'terminal') return <TerminalPanel />;
-    if (panels.bottomActivePanel === 'code') return <CodePreviewPanel />;
-    return null;
-  };
+    const onMouseMove = (moveEvent: MouseEvent) => {
+        const dx = moveEvent.clientX - startX;
+        const dy = moveEvent.clientY - startY;
+        let newLayout = { ...panelLayout };
 
+        if (panel === 'left') {
+            newLayout.leftSize = Math.max(200, Math.min(startSizes.leftSize + dx, 500));
+        } else if (panel === 'right') {
+            newLayout.rightSize = Math.max(250, Math.min(startSizes.rightSize - dx, 600));
+        } else if (panel === 'bottom') {
+            newLayout.bottomSize = Math.max(100, Math.min(startSizes.bottomSize - dy, window.innerHeight / 2));
+        }
+        dispatch({ type: 'SET_PANEL_LAYOUT', payload: newLayout });
+    };
+
+    const onMouseUp = () => {
+        setResizingPanel(null);
+        window.removeEventListener('mousemove', onMouseMove);
+        window.removeEventListener('mouseup', onMouseUp);
+    };
+
+    window.addEventListener('mousemove', onMouseMove);
+    window.addEventListener('mouseup', onMouseUp);
+  }, [dispatch, panelLayout]);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Alt') {
+        e.preventDefault();
+        dispatch({ type: 'SET_ALT_KEY_PRESSED', payload: true });
+      }
+    };
+    const handleKeyUp = (e: KeyboardEvent) => {
+      if (e.key === 'Alt') {
+        e.preventDefault();
+        dispatch({ type: 'SET_ALT_KEY_PRESSED', payload: false });
+        dispatch({ type: 'SET_HOVERED_ELEMENT_ID', payload: null });
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('keyup', handleKeyUp);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('keyup', handleKeyUp);
+    };
+  }, [dispatch]);
+  
+  const parentOfSelected = selectedElementId ? findParentElement(elementTree as readonly Element[], selectedElementId) : null;
+  
   return (
-    <div className="flex flex-col h-full">
-        <div className="flex flex-1 overflow-hidden">
-            <ActivityBar activeTab={activeSidebarTab} onTabChange={setActiveSidebarTab} onAssetStudioClick={() => openModal('assetStudio')} />
-            <DndContext sensors={sensors} onDragStart={handleDragStart} onDragOver={handleDragOver} onDragEnd={handleDragEnd}>
-                <div className="flex flex-1 overflow-hidden">
-                    {!panels.leftCollapsed && (
-                        <>
-                            <div style={{ width: `${panelLayout.leftSize}px`}} className="flex-shrink-0 h-full">
-                                <Sidebar activeTab={activeSidebarTab} onAddSnippet={() => openModal('importCode')} onEditSnippet={(s) => openModal('importCode', s)} onAiTheme={() => openModal('designSystem')} />
-                            </div>
-                            <Resizer onMouseDown={createResizeHandler('left')} isDragging={resizingPanel === 'left'} />
-                        </>
-                    )}
-                    <main className="flex-1 flex flex-col overflow-hidden relative min-w-0">
-                        <div className="flex-1 overflow-hidden relative">
-                            <Canvas elements={rootElements} dropIndicator={dropIndicator} onContextMenu={handleContextMenu} mode={previewMode ? 'preview' : 'edit'} cursors={multiplayerCursors} />
-                            {altKeyPressed && selectedElement && hoveredElement && <MeasurementGuides selectedElement={selectedElement} hoveredElement={hoveredElement} />}
-                        </div>
-                        {panels.bottomActivePanel && <Resizer onMouseDown={createResizeHandler('bottom')} vertical isDragging={resizingPanel === 'bottom'} />}
-                        {panels.bottomActivePanel && (
-                            <div style={{ height: `${panelLayout.bottomSize}px`}} className="flex-shrink-0">
-                                {renderBottomPanel()}
-                            </div>
-                        )}
-                    </main>
-                    {!panels.rightCollapsed && (
-                        <>
-                            <Resizer onMouseDown={createResizeHandler('right')} isDragging={resizingPanel === 'right'} />
-                            <div style={{ width: `${panelLayout.rightSize}px`}} className="flex-shrink-0 h-full overflow-y-auto">
-                                <PropertiesPanel parentElement={selectedElementParent as Element | null} onAiRefine={() => openModal('aiRefine')} onAiInteraction={() => openModal('aiInteraction')} />
-                            </div>
-                        </>
-                    )}
-                </div>
-                <DragOverlay>{draggedItemOverlay}</DragOverlay>
-            </DndContext>
-        </div>
-        <StatusBar selectedElementPath={selectedElementPath as Element[]} />
-        {contextMenu && (
-            <ContextMenu x={contextMenu.x} y={contextMenu.y} onClose={() => setContextMenu(null)} elementId={contextMenu.elementId}
-            onCreateComponent={() => {
-                const { element: elementToComponent } = findElementDeep(rootElements, contextMenu.elementId);
-                if (elementToComponent) openModal('createComponent', elementToComponent);
-            }}
-            />
+    <div className="flex h-full">
+      <ActivityBar activeTab={activeTab} onTabChange={setActiveTab} onAssetStudioClick={() => openModal('assetStudio')}/>
+      {!panels.leftCollapsed && (
+        <aside style={{ width: `${panelLayout.leftSize}px` }} className="bg-[var(--color-surface)] flex flex-col flex-shrink-0">
+          <Sidebar activeTab={activeTab} onAddSnippet={() => openModal('importCode')} onEditSnippet={(s) => openModal('importCode', s)} onAiTheme={() => openModal('designSystem')} />
+        </aside>
+      )}
+      {!panels.leftCollapsed && <Resizer onMouseDown={(e) => handlePanelResize(e, 'left')} isDragging={resizingPanel === 'left'}/>}
+      
+      <div className="flex-1 flex flex-col overflow-hidden">
+        <DndContext onDragStart={handleDragStart} onDragOver={handleDragOver} onDragEnd={handleDragEnd} sensors={sensors}>
+          <div className="flex-1 flex flex-col min-h-0">
+            <Canvas elements={elementTree} dropIndicator={dropIndicator} onContextMenu={handleContextMenu} mode={previewMode ? 'preview' : 'edit'} cursors={multiplayerCursors} />
+            {altKeyPressed && selectedElement && hoveredElement && selectedElement.id !== hoveredElement.id && (
+                <MeasurementGuides selectedElement={selectedElement as Element} hoveredElement={hoveredElement as Element} />
+            )}
+            <DragOverlay dropAnimation={null}>
+                {draggedItemOverlay}
+            </DragOverlay>
+          </div>
+        </DndContext>
+        {panels.bottomActivePanel && (
+          <>
+            <Resizer onMouseDown={(e) => handlePanelResize(e, 'bottom')} vertical isDragging={resizingPanel === 'bottom'}/>
+            <div style={{ height: `${panelLayout.bottomSize}px` }} className="flex-shrink-0">
+              {panels.bottomActivePanel === 'terminal' && <TerminalPanel />}
+              {panels.bottomActivePanel === 'code' && <CodePreviewPanel />}
+            </div>
+          </>
         )}
+        <StatusBar selectedElementPath={selectedElementPath as readonly Element[]} />
+      </div>
+      
+      {!panels.rightCollapsed && <Resizer onMouseDown={(e) => handlePanelResize(e, 'right')} isDragging={resizingPanel === 'right'}/>}
+      {!panels.rightCollapsed && (
+          <aside style={{ width: `${panelLayout.rightSize}px` }} className="bg-[var(--color-surface)] flex flex-col flex-shrink-0">
+            <PropertiesPanel 
+                onAiRefine={() => openModal('aiRefine')} 
+                onAiInteraction={() => openModal('aiInteraction')}
+                parentElement={parentOfSelected}
+            />
+          </aside>
+      )}
+
+      {contextMenu && (
+        <ContextMenu
+          x={contextMenu.x}
+          y={contextMenu.y}
+          elementId={contextMenu.elementId}
+          onClose={() => setContextMenu(null)}
+          onCreateComponent={() => {
+            const { element } = findElementDeep(elementTree as readonly Element[], contextMenu.elementId);
+            if (element) openModal('createComponent', element);
+          }}
+        />
+      )}
     </div>
   );
 }
